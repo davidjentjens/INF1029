@@ -1,10 +1,12 @@
 #include "matrix_lib.h"
-
-//8x16 * 16x10
-
-//8x10
+#include "timer.h"
 
 int main(int argc, char **argv){
+	// Declaracao das variaveis de tempo
+	struct timeval start_scalar_mult, stop_scalar_mult, start_matrix_mult,stop_matrix_mult, overall_t1, overall_t2;
+	float overall_time, matrix_scalar_time, matrix_mult_time;
+	gettimeofday(&overall_t1, NULL);
+
 	// Declaracao e inicializacao de variaveis misc
 	float scalar = atof(argv[1]);
 	int error;
@@ -59,11 +61,11 @@ int main(int argc, char **argv){
 	// Preenchendo a matriz C com zeros
 	fill_matrix(0, mC);
 	
-	matrix_print(mA, "A");
-	matrix_print(mB, "B");
 
-	// Multiplicando matriz A pelo valor escalar
+	// Multiplicando matriz A pelo valor escalar e cronometrando o tempo
+	gettimeofday(&start_scalar_mult, NULL);
 	error = scalar_matrix_mult(scalar, mA);
+	gettimeofday(&stop_scalar_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplicar matriz A por escalar");
 	}
@@ -74,8 +76,10 @@ int main(int argc, char **argv){
 	}
 	
 	
-	// Multiplicando matriz A pela matriz B
+	// Multiplicando matriz A pela matriz B e cronometrando o tempo
+	gettimeofday(&start_matrix_mult, NULL);
 	error = matrix_matrix_mult(mA, mB, mC);
+	gettimeofday(&stop_matrix_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B");
 	}
@@ -84,8 +88,6 @@ int main(int argc, char **argv){
 	if(error == 0){
 		printf("Erro ao escrever matriz no arquivo .dat");
 	}
-
-	matrix_print(mC, "C");
 
 	// Fechando arquivos .dat
 	fclose(file1);
@@ -98,5 +100,15 @@ int main(int argc, char **argv){
 	free(mB);
 	free(mC);
 	
+	gettimeofday(&overall_t2, NULL);
+
+	overall_time = timedifference_msec(overall_t1, overall_t2);
+	matrix_scalar_time = timedifference_msec(start_scalar_mult, stop_scalar_mult);
+	matrix_mult_time = timedifference_msec(start_matrix_mult, stop_matrix_mult);
+
+	printf("Tempo total do programa: (%f ms) | (%f s) | (%f min)\n", overall_time,overall_time/1000,overall_time/60000);
+	printf("Tempo total para multiplicacao escalar: (%f ms) | (%f s) | (%f min)\n", matrix_scalar_time,matrix_scalar_time/1000,matrix_scalar_time/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (%f ms) | (%f s) | (%f min)\n", matrix_mult_time,matrix_mult_time/1000,matrix_mult_time/60000);
+
 	return 0;
 }
