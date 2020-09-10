@@ -5,6 +5,7 @@ Repositório para trabalhos da disciplina INF1029 - Introdução a Arquitetura d
 
 Tempo de execução usando matriz 1024x1024
 
+>> ./gcc -Wall -o matrix_lib_test matrix_lib_test.c matrix_lib.c timer.c
 >> ./matrix_lib_test 5.0 1024 1024 1024 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
 
 Tempo total do programa: (9146.563477 ms) | (9.146564 s) | (0.152443 min)
