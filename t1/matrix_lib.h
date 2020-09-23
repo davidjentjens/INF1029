@@ -24,6 +24,9 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix);
 /** Multiplica matriz A por matriz B de um valor fornecido. */
 int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c);
 
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada. */
+int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c);
+
 /** Imprime a matriz fornecida */
 int matrix_print(Matrix * matrix, char * nome);
 

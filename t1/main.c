@@ -19,12 +19,12 @@ int main(int argc, char *argv[]){
   fill_matrix(10, matrix_a);
   fill_matrix(2, matrix_b);
 
-  matrix_print(matrix_a);
-  matrix_print(matrix_b);
+  matrix_print(matrix_a, "MATRIX_A");
+  matrix_print(matrix_b, "MATRIX_B");
 
-  matrix_matrix_mult(matrix_a, matrix_b, matrix_c);
+  matrix_matrix_mult_otm(matrix_a, matrix_b, matrix_c);
 
-  matrix_print(matrix_c);
+  matrix_print(matrix_c, "MATRIX_C");
 
   return 0;
 }

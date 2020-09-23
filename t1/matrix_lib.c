@@ -104,6 +104,37 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   return 1;
 }
 
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada. */
+int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
+  if(matrix_a == NULL || matrix_b == NULL){
+    printf("\nUma ou duas das matrizes não declaradas.\n");
+    return 0;
+  }
+
+  if(matrix_a->width != matrix_b->height){
+    printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
+    return 0;
+  }
+
+  printf("\nMultiplicando matriz A por matriz B...\n");
+
+  for(int i = 0; i < matrix_a->height; i++){
+    for(int j = 0; j < matrix_a->width; j++){
+      float cA = matrix_a->rows[i * matrix_a->width + j];
+
+      printf("\n%f\n", cA);
+
+      for(int seqIter = 0; seqIter < matrix_b->width; seqIter++){
+        float cB = matrix_b->rows[i * matrix_b->width + seqIter];
+        printf("%f\n", cB);
+        matrix_c->rows[i * matrix_a->width + seqIter] += cA*cB; 
+      }
+    }
+  }
+
+  return 1;
+}
+
 /** Imprime a matriz fornecida */
 int matrix_print(Matrix * matrix, char * nome){
   if(matrix == NULL){
