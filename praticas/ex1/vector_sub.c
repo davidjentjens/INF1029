@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include "timer.h"
 
-#define MINUEND 8.0
-#define SUBTRAHEND 5.0
-#define EXPECTED_RESULT 3.0
+#define MINUEND 8.0f
+#define SUBTRAHEND 5.0f
+#define EXPECTED_RESULT 3.0f
 
 #define DELTA 0.000001
 

@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include "timer.h"
 
-#define MINUEND 8.0f
-#define SUBTRAHEND 5.0f
-#define EXPECTED_RESULT 3.0
+#define NUMBER_A 5.0f
+#define NUMBER_B 2.0f
+#define NUMBER_C 3.0f
+#define EXPECTED_RESULT 13.0f
 
 #define DELTA 0.000001
 
@@ -20,50 +21,60 @@ int main(int argc, char *argv[]) {
   }
 
   /* Aloca os tres arrays em memoria */
-  float* arrayEvens = (float*)aligned_alloc(32, tamanho * sizeof(float));
-  if(arrayEvens == NULL){
-    printf("Alocação de arrayEvens não foi feita corretamente\n");
+  float* arrayA = (float*)aligned_alloc(32, tamanho * sizeof(float));
+  if(arrayA == NULL){
+    printf("Alocação de arrayA não foi feita corretamente\n");
     return 1;
   }
-  float* arrayOdds = (float*)aligned_alloc(32, tamanho * sizeof(float));
-  if(arrayEvens == NULL){
-    printf("Alocação de arrayOdds não foi feita corretamente\n");
+  float* arrayB = (float*)aligned_alloc(32, tamanho * sizeof(float));
+  if(arrayB == NULL){
+    printf("Alocação de arrayB não foi feita corretamente\n");
+    return 1;
+  }
+  float* arrayC = (float*)aligned_alloc(32, tamanho * sizeof(float));
+  if(arrayC == NULL){
+    printf("Alocação de arrayC não foi feita corretamente\n");
     return 1;
   }
   float* arrayResult = (float*)aligned_alloc(32, tamanho * sizeof(float));
-  if(arrayEvens == NULL){
+  if(arrayResult == NULL){
     printf("Alocação de arrayResult não foi feita corretamente\n");
     return 1;
   }
   
-  /* Inicializa os dois arrays em memória */
-  __m256 evens = _mm256_set1_ps(MINUEND);
-  __m256 odds = _mm256_set1_ps(SUBTRAHEND);
+  /* Inicializa os três arrays em memória */
+  __m256 vectorA = _mm256_set1_ps(NUMBER_A);
+  __m256 vectorB = _mm256_set1_ps(NUMBER_B);
+  __m256 vectorC = _mm256_set1_ps(NUMBER_C);
 
-  float * evensNext = arrayEvens;
-  float * oddsNext = arrayOdds;
+  float * vectorANext = arrayA;
+  float * vectorBNext = arrayB;
+  float * vectorCNext = arrayC;
 
-  for (i = 0; i < tamanho; i+=8, evensNext+=8, oddsNext+=8){
-    _mm256_store_ps(evensNext, evens);
-    _mm256_store_ps(oddsNext, odds);
+  for (i = 0; i < tamanho; i+=8, vectorANext+=8, vectorBNext+=8, vectorCNext+=8){
+    _mm256_store_ps(vectorANext, vectorA);
+    _mm256_store_ps(vectorBNext, vectorB);
+    _mm256_store_ps(vectorCNext, vectorC);
   }
   
-  /* Executa a subtração dos elementos dos arrays: resultado = evens – odds */
+  /* Executa a multiplicação dos elementos dos arrays: resultado = vectorA * vectorB + vectorC */
   struct timeval start, stop;
   gettimeofday(&start, NULL);
 
-  __m256 result = _mm256_set1_ps(0.0);
+  __m256 result;
 
   float * resultsNext = arrayResult;
 
-  evensNext = arrayEvens;
-  oddsNext = arrayOdds;
+  vectorANext = arrayA;
+  vectorBNext = arrayB;
+  vectorCNext = arrayC;
 
-  for (i = 0; i < tamanho; i+=8, evensNext+=8, oddsNext+=8, resultsNext+=8){
-    evens = _mm256_load_ps(evensNext);
-    odds = _mm256_load_ps(oddsNext);
+  for (i = 0; i < tamanho; i+=8, vectorANext+=8, vectorBNext+=8, vectorCNext+=8, resultsNext+=8){
+    vectorA = _mm256_load_ps(vectorANext);
+    vectorB = _mm256_load_ps(vectorBNext);
+    vectorC = _mm256_load_ps(vectorCNext);
 
-    result = _mm256_sub_ps(evens, odds);
+    result = _mm256_fmadd_ps(vectorA, vectorB, vectorC);
 
     _mm256_store_ps(resultsNext, result);
   }
@@ -71,23 +82,24 @@ int main(int argc, char *argv[]) {
   gettimeofday(&stop, NULL);
   printf("%f ms\n", timedifference_msec(start, stop));
 
-  /* Verifica se ocorreu algum erro na subtração de algum elemento */
+  /* Verifica se ocorreu algum erro na multiplicação de algum elemento */
   for (i = 0; i < tamanho; i++){
     if(arrayResult[i] - EXPECTED_RESULT > DELTA){
-      printf("A subtração não ocorreu corretamente.\n");
+      printf("A multiplicação não ocorreu corretamente.\n");
 
       return 1;
     }
   }
 
-  printf("A subtração ocorreu corretamente.\n");
+  printf("A multiplicação ocorreu corretamente.\n");
   
   /* Libera a memória alocada pelos arrays em memória */
-  free(arrayEvens);
-  free(arrayOdds);
+  free(arrayA);
+  free(arrayB);
+  free(arrayC);
   free(arrayResult);
   
   return 0;
 }
 
-// gcc -mavx -std=c11 -o vector_sub_avx vector_sub_avx.c timer.c
+// gcc -mfma -std=c11 -o vector_mult_avx vector_mult_avx.c timer.c

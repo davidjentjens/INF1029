@@ -4,7 +4,7 @@
 
 #define MINUEND 8.0f
 #define SUBTRAHEND 5.0f
-#define EXPECTED_RESULT 3.0
+#define EXPECTED_RESULT 3.0f
 
 #define DELTA 0.000001
 
@@ -26,12 +26,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   float* arrayOdds = (float*)aligned_alloc(32, tamanho * sizeof(float));
-  if(arrayEvens == NULL){
+  if(arrayOdds == NULL){
     printf("Alocação de arrayOdds não foi feita corretamente\n");
     return 1;
   }
   float* arrayResult = (float*)aligned_alloc(32, tamanho * sizeof(float));
-  if(arrayEvens == NULL){
+  if(arrayResult == NULL){
     printf("Alocação de arrayResult não foi feita corretamente\n");
     return 1;
   }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
   struct timeval start, stop;
   gettimeofday(&start, NULL);
 
-  __m256 result = _mm256_set1_ps(0.0);
+  __m256 result;
 
   float * resultsNext = arrayResult;
 
