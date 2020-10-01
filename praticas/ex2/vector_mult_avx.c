@@ -47,14 +47,14 @@ int main(int argc, char *argv[]) {
   __m256 vectorB = _mm256_set1_ps(NUMBER_B);
   __m256 vectorC = _mm256_set1_ps(NUMBER_C);
 
-  float * vectorANext = arrayA;
-  float * vectorBNext = arrayB;
-  float * vectorCNext = arrayC;
+  float * arrayANext = arrayA;
+  float * arrayBNext = arrayB;
+  float * arrayCNext = arrayC;
 
-  for (i = 0; i < tamanho; i+=8, vectorANext+=8, vectorBNext+=8, vectorCNext+=8){
-    _mm256_store_ps(vectorANext, vectorA);
-    _mm256_store_ps(vectorBNext, vectorB);
-    _mm256_store_ps(vectorCNext, vectorC);
+  for (i = 0; i < tamanho; i+=8, arrayANext+=8, arrayBNext+=8, arrayCNext+=8){
+    _mm256_store_ps(arrayANext, vectorA);
+    _mm256_store_ps(arrayBNext, vectorB);
+    _mm256_store_ps(arrayCNext, vectorC);
   }
   
   /* Executa a multiplicação dos elementos dos arrays: resultado = vectorA * vectorB + vectorC */
@@ -65,14 +65,14 @@ int main(int argc, char *argv[]) {
 
   float * resultsNext = arrayResult;
 
-  vectorANext = arrayA;
-  vectorBNext = arrayB;
-  vectorCNext = arrayC;
+  arrayANext = arrayA;
+  arrayBNext = arrayB;
+  arrayCNext = arrayC;
 
-  for (i = 0; i < tamanho; i+=8, vectorANext+=8, vectorBNext+=8, vectorCNext+=8, resultsNext+=8){
-    vectorA = _mm256_load_ps(vectorANext);
-    vectorB = _mm256_load_ps(vectorBNext);
-    vectorC = _mm256_load_ps(vectorCNext);
+  for (i = 0; i < tamanho; i+=8, arrayANext+=8, arrayBNext+=8, arrayCNext+=8, resultsNext+=8){
+    vectorA = _mm256_load_ps(arrayANext);
+    vectorB = _mm256_load_ps(arrayBNext);
+    vectorC = _mm256_load_ps(arrayCNext);
 
     result = _mm256_fmadd_ps(vectorA, vectorB, vectorC);
 

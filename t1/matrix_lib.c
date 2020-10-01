@@ -2,11 +2,11 @@
 
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width){
-  Matrix * matrix = (Matrix *) malloc(sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width));
+  Matrix * matrix = (Matrix *) aligned_alloc(32, sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width));
   
   matrix->height = matrix_height;
   matrix->width = matrix_width;
-  matrix->rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
+  matrix->rows = (float *) aligned_alloc(32, matrix_height * matrix_width * sizeof(float));
   
   return matrix;
 }
@@ -66,6 +66,7 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
   return 1;
 }
 
+
 /** Multiplica matriz A por matriz B de um valor fornecido. */
 int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   if(matrix_a == NULL || matrix_b == NULL){
@@ -77,8 +78,6 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
     printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
     return 0;
   }
-
-  printf("\nMultiplicando matriz A por matriz B...\n");
 
   // Tamanho do somatório de multiplicações de elementos da matriz A com elementos da matriz B
   int equalSeqLen = matrix_a->width;
@@ -105,7 +104,6 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada. */
 int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
 
-
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
     return 0;
@@ -115,8 +113,6 @@ int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix
     printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
     return 0;
   }
-
-  printf("\nMultiplicando matriz A por matriz B (Otimizada)...\n");
 
   for(int i = 0; i < matrix_a->height; i++){
 
@@ -134,6 +130,44 @@ int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix
   return 1;
 }
 
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando AVX. */
+int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
+  if(matrix_a == NULL || matrix_b == NULL){
+    printf("\nUma ou duas das matrizes não declaradas.\n");
+    return 0;
+  }
+
+  if(matrix_a->width != matrix_b->height){
+    printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
+    return 0;
+  }
+
+  __m256 vectorA, vectorB, vectorC, result;
+
+  float * arrayANext = matrix_a->rows;
+  float * arrayBNext = matrix_b->rows;
+  float * arrayCNext = matrix_c->rows;
+
+  for(int i = 0; i < matrix_a->height*matrix_a->width; i++, arrayANext++){
+
+    vectorA = _mm256_set1_ps(*arrayANext);
+    arrayBNext = matrix_b->rows;
+
+    int row = i / matrix_a->width;
+    arrayCNext = matrix_c->rows + row * matrix_b->width;
+
+    for(int k = 0; k < matrix_b->width; k+=8, arrayBNext+=8, arrayCNext+=8){
+      vectorB = _mm256_load_ps(arrayBNext);
+      vectorC = _mm256_load_ps(arrayCNext);
+
+      result = _mm256_fmadd_ps(vectorA, vectorB, vectorC);
+      
+      _mm256_store_ps(arrayCNext, result);
+    }
+
+  }
+  return 1;
+}
 
 
 /** Imprime a matriz fornecida */
