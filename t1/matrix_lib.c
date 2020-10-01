@@ -57,8 +57,6 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
     return 0;
   }
 
-  printf("\nMultiplicando matriz por %.3f...\n", scalar_value);
-
   for(int i = 0; i < matrix->height; i++){
     for (int j = 0; j < matrix->width; j++){
       matrix->rows[i * matrix->width + j] *= scalar_value;
@@ -106,6 +104,8 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada. */
 int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
+
+
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
     return 0;
@@ -116,24 +116,25 @@ int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix
     return 0;
   }
 
-  printf("\nMultiplicando matriz A por matriz B...\n");
+  printf("\nMultiplicando matriz A por matriz B (Otimizada)...\n");
 
   for(int i = 0; i < matrix_a->height; i++){
-    for(int j = 0; j < matrix_a->width; j++){
-      float cA = matrix_a->rows[i * matrix_a->width + j];
 
-      printf("\n%f\n", cA);
+    for(int j=0; j < matrix_a->width; j++){
+      float position = matrix_a->rows[i * matrix_a->width + j];
 
-      for(int seqIter = 0; seqIter < matrix_b->width; seqIter++){
-        float cB = matrix_b->rows[i * matrix_b->width + seqIter];
-        printf("%f\n", cB);
-        matrix_c->rows[i * matrix_a->width + seqIter] += cA*cB; 
-      }
+       for(int k =0; k < matrix_b->width; k++){
+         matrix_c->rows[i * matrix_c->width + k] += (position * matrix_b->rows[j+matrix_b->width + k]);
+       }
     }
+
   }
+  
 
   return 1;
 }
+
+
 
 /** Imprime a matriz fornecida */
 int matrix_print(Matrix * matrix, char * nome){
