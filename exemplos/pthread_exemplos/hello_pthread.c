@@ -1,9 +1,9 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define NUM_THREADS     5
+#define NUM_THREADS 5
 
- void *PrintHello(void *threadid)
+ void * PrintHello(void * threadid)
  {
     long tid;
     tid = (long)threadid;
@@ -28,3 +28,5 @@
     /* Last thing that main() should do */
     pthread_exit(NULL);
  }
+
+// gcc -Wall -o hello_pthread hello_pthread.c

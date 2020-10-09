@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NUM_THREADS	4
+#define NUM_THREADS 4
 
 void *BusyWork(void *t)
 {
@@ -55,3 +55,5 @@ int main (int argc, char *argv[])
  printf("Main: program completed. Exiting.\n");
  pthread_exit(NULL);
 }
+
+// gcc -pthread -lm -o join_pthread join_pthread.c

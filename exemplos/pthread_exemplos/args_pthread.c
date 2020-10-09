@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_THREADS     5
+#define NUM_THREADS 5
 
 struct thread_data {
    long thread_id;
@@ -42,3 +42,5 @@ int main (int argc, char *argv[]) {
     /* Last thing that main() should do */
     pthread_exit(NULL);
 }
+
+// gcc -pthread -Wall -o args_pthread args_pthread.c 
