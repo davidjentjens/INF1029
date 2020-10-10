@@ -1,3 +1,4 @@
+#include <immintrin.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +40,7 @@ void * InitializeArraySegment(void * threadarg) {
   struct thread_data * my_data;
   my_data = (struct thread_data*) threadarg;
 
-  printf("Thread #%ld: Initialize array segment:\n", my_data->thread_id);
+  printf("Thread #%ld: Initialize array segment with AVX:\n", my_data->thread_id);
 
   int segmentEnd = (my_data->size / NUM_THREADS) + my_data->offset;
   if(my_data->last){
@@ -48,10 +49,19 @@ void * InitializeArraySegment(void * threadarg) {
 
   // printThreadData(my_data, segmentEnd, COLOR_CYAN);
 
-  for (int i = my_data->offset; i < segmentEnd; i++){
-    my_data->arrayEvens[i] = NUMBER_A;
-    my_data->arrayOdds[i] = NUMBER_B;
-    my_data->arrayResult[i] = 0.0;
+  /* Inicializa os três vetores em memória */
+  __m256 vectorEvens = _mm256_set1_ps(NUMBER_A);
+  __m256 vectorOdds = _mm256_set1_ps(NUMBER_B);
+  __m256 vectorResult = _mm256_set1_ps(0.0);
+
+  float * arrayEvensNext = &my_data->arrayEvens[my_data->offset];
+  float * arrayOddsNext = &my_data->arrayOdds[my_data->offset];
+  float * arrayResultNext = &my_data->arrayResult[my_data->offset];
+
+  for (int i = my_data->offset; i < segmentEnd; i+=8, arrayEvensNext+=8, arrayOddsNext+=8, arrayResultNext+=8){
+    _mm256_store_ps(arrayEvensNext, vectorEvens);
+    _mm256_store_ps(arrayOddsNext, vectorOdds);
+    _mm256_store_ps(arrayResultNext, vectorResult);
   }
 
   pthread_exit(NULL);
@@ -61,17 +71,29 @@ void * MultiplyArraySegment(void * threadarg) {
   struct thread_data * my_data;
   my_data = (struct thread_data*) threadarg;
 
-  printf("Thread #%ld: Multiply array segment\n", my_data->thread_id);
+  printf("Thread #%ld: Multiply array segment with AVX\n", my_data->thread_id);
 
   int segmentEnd = (my_data->size / NUM_THREADS) + my_data->offset;
   if(my_data->last){
     segmentEnd = my_data->size;
   }
 
+  /* Declara vetores AVX para uso a seguir */
+  __m256 vectorEvens, vectorOdds, vectorResult;
+
   // printThreadData(my_data, segmentEnd, COLOR_YELLOW);
 
-  for (int i = my_data->offset; i < segmentEnd; i++){
-    my_data->arrayResult[i] = my_data->arrayEvens[i] * my_data->arrayOdds[i];
+  float * arrayEvensNext = &my_data->arrayEvens[my_data->offset];
+  float * arrayOddsNext = &my_data->arrayOdds[my_data->offset];
+  float * arrayResultNext = &my_data->arrayResult[my_data->offset];
+
+  for (int i = my_data->offset; i < segmentEnd; i+=8, arrayEvensNext+=8, arrayOddsNext+=8, arrayResultNext+=8){
+    vectorEvens = _mm256_load_ps(arrayEvensNext);
+    vectorOdds = _mm256_load_ps(arrayOddsNext);
+
+    vectorResult = _mm256_mul_ps(vectorEvens, vectorOdds);
+
+    _mm256_store_ps(arrayResultNext, vectorResult);
   }
 
   pthread_exit(NULL);
@@ -86,8 +108,8 @@ int main(int argc, char *argv[]) {
 
   int size = atoi(argv[1]);
 
-  if(size % 8 != 0){
-    printf("The size must be multiple 8.\n");
+  if(size < 8*NUM_THREADS || size % 8*NUM_THREADS != 0){
+    printf("The array size must be a multiple of (NUM_THREADS * 8).\n");
     return 1;
   }
 
@@ -113,6 +135,10 @@ int main(int argc, char *argv[]) {
     printf("Error allocating arrays.\n");
     return 1;
   }
+
+  /* Inicializa timer */
+  struct timeval start, stop;
+  gettimeofday(&start, NULL);
   
   /* Cria threads para inicializar os tres arrays em memória */
   for(t = 0; t < NUM_THREADS; t++){
@@ -139,9 +165,6 @@ int main(int argc, char *argv[]) {
   }
 
   /* Cria threads para executar a multiplicação dos elementos dos arrays */
-  struct timeval start, stop;
-  gettimeofday(&start, NULL);
-
   for(t = 0; t < NUM_THREADS; t++){
     printf("In main: creating thread %ld\n", t);
     thread_data_array[t].thread_id = t;
@@ -166,9 +189,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
-
   /* Libera atributo e espera pelos outros threads */
   pthread_attr_destroy(&attr);
   for(t = 0; t < NUM_THREADS; t++) {
@@ -180,8 +200,13 @@ int main(int argc, char *argv[]) {
     printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
   }
 
+  /* Para o timer */
+  gettimeofday(&stop, NULL);
+  printf("%f ms\n", timedifference_msec(start, stop));
+
   /* Verifica se ocorreu algum erro na multiplicação de algum elemento */
   for (i = 0; i < size; i++){
+    // printf("%f\n", arrayResult[i]);
     if(arrayResult[i] - EXPECTED_RESULT > DELTA){
       printf("Multiplication did not occur correctly.\n");
       return 1;
@@ -199,4 +224,4 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// gcc -std=c11 -pthread -Wall -o array_mult_pthread array_mult_pthread.c
+// gcc -mfma -std=c11 -pthread -Wall -o array_mult_pthread_avx array_mult_pthread_avx.c timer.c

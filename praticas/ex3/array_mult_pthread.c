@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
   int size = atoi(argv[1]);
 
   if(size % 8 != 0){
-    printf("The size must be multiple 8.\n");
+    printf("The array size must be a multiple 8.\n");
     return 1;
   }
 
@@ -113,6 +113,10 @@ int main(int argc, char *argv[]) {
     printf("Error allocating arrays.\n");
     return 1;
   }
+
+  /* Inicializa timer */
+  struct timeval start, stop;
+  gettimeofday(&start, NULL);
   
   /* Cria threads para inicializar os tres arrays em memória */
   for(t = 0; t < NUM_THREADS; t++){
@@ -139,9 +143,6 @@ int main(int argc, char *argv[]) {
   }
 
   /* Cria threads para executar a multiplicação dos elementos dos arrays */
-  struct timeval start, stop;
-  gettimeofday(&start, NULL);
-
   for(t = 0; t < NUM_THREADS; t++){
     printf("In main: creating thread %ld\n", t);
     thread_data_array[t].thread_id = t;
@@ -166,9 +167,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
-
   /* Libera atributo e espera pelos outros threads */
   pthread_attr_destroy(&attr);
   for(t = 0; t < NUM_THREADS; t++) {
@@ -179,6 +177,10 @@ int main(int argc, char *argv[]) {
     }
     printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
   }
+
+  /* Para o timer */
+  gettimeofday(&stop, NULL);
+  printf("%f ms\n", timedifference_msec(start, stop));
 
   /* Verifica se ocorreu algum erro na multiplicação de algum elemento */
   for (i = 0; i < size; i++){
@@ -199,4 +201,4 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// gcc -pthread -Wall -o array_mult_pthread array_mult_pthread.c
+// gcc -pthread -Wall -o array_mult_pthread array_mult_pthread.c timer.c
