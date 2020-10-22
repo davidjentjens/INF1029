@@ -18,7 +18,7 @@
 
 struct thread_data {
    long thread_id;
-   int offset;
+   long unsigned int offset;
    int size;
    int last;
    float * arrayEvens;

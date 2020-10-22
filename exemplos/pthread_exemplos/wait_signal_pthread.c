@@ -6,12 +6,12 @@
 #define TCOUNT 10
 #define COUNT_LIMIT 12
 
-int     count = 0;
-long    thread_ids[3] = {0,1,2};
+int count = 0;
+long thread_ids[3] = {0,1,2};
 pthread_mutex_t count_mutex;
 pthread_cond_t count_threshold_cond_var;
 
-void *inc_count(void *t) {
+void * inc_count(void *t) {
    int i;
    long my_id = (long)t;
 

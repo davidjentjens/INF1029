@@ -36,6 +36,7 @@ void printThreadData(struct thread_data * my_data, int segmentEnd, char * color)
 }
 
 void * InitializeArraySegment(void * threadarg) {
+  unsigned long int i;
   struct thread_data * my_data;
   my_data = (struct thread_data*) threadarg;
 
@@ -48,7 +49,7 @@ void * InitializeArraySegment(void * threadarg) {
 
   // printThreadData(my_data, segmentEnd, COLOR_CYAN);
 
-  for (int i = my_data->offset; i < segmentEnd; i++){
+  for (i = my_data->offset; i < segmentEnd; i++){
     my_data->arrayEvens[i] = NUMBER_A;
     my_data->arrayOdds[i] = NUMBER_B;
     my_data->arrayResult[i] = 0.0;
@@ -58,6 +59,7 @@ void * InitializeArraySegment(void * threadarg) {
 }
 
 void * MultiplyArraySegment(void * threadarg) {
+  unsigned long int i;
   struct thread_data * my_data;
   my_data = (struct thread_data*) threadarg;
 
@@ -70,7 +72,7 @@ void * MultiplyArraySegment(void * threadarg) {
 
   // printThreadData(my_data, segmentEnd, COLOR_YELLOW);
 
-  for (int i = my_data->offset; i < segmentEnd; i++){
+  for (i = my_data->offset; i < segmentEnd; i++){
     my_data->arrayResult[i] = my_data->arrayEvens[i] * my_data->arrayOdds[i];
   }
 
@@ -201,4 +203,4 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-// gcc -pthread -Wall -o array_mult_pthread array_mult_pthread.c timer.c
+// gcc -std=c11 -pthread -Wall -o array_mult_pthread array_mult_pthread.c timer.c
