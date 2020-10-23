@@ -1,16 +1,24 @@
 #include "matrix_lib.h"
 #include "timer.h"
 
+#define NUM_THREADS 8
+
 int main(int argc, char **argv){
 	// Declaracao das variaveis de tempo
-	struct timeval start_scalar_mult, stop_scalar_mult, start_matrix_mult,stop_matrix_mult,
-					start_matrix_mult_otm,stop_matrix_mult_otm,
-					start_matrix_mult_otm_avx, stop_matrix_mult_otm_avx,
-					start_matrix_read_time, stop_matrix_read_time,
-					overall_t1, overall_t2;
+	struct timeval start_scalar_mult, stop_scalar_mult, 
+			start_matrix_mult, stop_matrix_mult,
+			start_matrix_mult_otm, stop_matrix_mult_otm,
+			start_matrix_mult_otm_avx, stop_matrix_mult_otm_avx,
+			start_matrix_mult_otm_pthread, stop_matrix_mult_otm_pthread,
+			start_matrix_read_time, stop_matrix_read_time,
+			overall_t1, overall_t2;
 					
-	float overall_time, matrix_scalar_time, matrix_mult_time,
-			matrix_mult_time_otm,matrix_mult_time_otm_avx,
+	float overall_time, 
+			matrix_scalar_time, 
+			matrix_mult_time,
+			matrix_mult_time_otm, 
+			matrix_mult_time_otm_avx, 
+			matrix_mult_time_otm_pthread,
 			matrix_read_time;
 
 	gettimeofday(&overall_t1, NULL);
@@ -100,7 +108,7 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pela matriz B e cronometrando o tempo
 	gettimeofday(&start_matrix_mult, NULL);
 	printf("\nMultiplicando matriz A por matriz B...\n");
-	// error = matrix_matrix_mult(mA, mB, mC);
+	error = matrix_matrix_mult(mA, mB, mC);
 	gettimeofday(&stop_matrix_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B");
@@ -109,7 +117,7 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pela matriz B (otimizado) e cronometrando o tempo
 	gettimeofday(&start_matrix_mult_otm, NULL);
 	printf("\nMultiplicando matriz A por matriz B (Otimizada)...\n");
-	// error = matrix_matrix_mult_otm(mA, mB, m_otm_C);
+	error = matrix_matrix_mult_otm(mA, mB, m_otm_C);
 	gettimeofday(&stop_matrix_mult_otm, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B (otimizado)");
@@ -122,6 +130,15 @@ int main(int argc, char **argv){
 	gettimeofday(&stop_matrix_mult_otm_avx, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B (otimizado com AVX)");
+	}
+
+	// Multiplicando matriz A pela matriz B (otimizado com pthread) e cronometrando o tempo
+	gettimeofday(&start_matrix_mult_otm_pthread, NULL);
+	printf("\nMultiplicando matriz A por matriz B (Otimizada com pthread)...\n");
+	error = matrix_matrix_mult_otm_pthread(mA, mB, m_avx_C, NUM_THREADS);
+	gettimeofday(&stop_matrix_mult_otm_pthread, NULL);
+	if(error == 0){
+		printf("Erro função de multiplar matriz A por matriz B (otimizado com pthread)");
 	}
 
 	// Comandos para debugging do resultado
@@ -153,18 +170,22 @@ int main(int argc, char **argv){
 	matrix_mult_time = timedifference_msec(start_matrix_mult, stop_matrix_mult);
 	matrix_mult_time_otm = timedifference_msec(start_matrix_mult_otm, stop_matrix_mult_otm);
 	matrix_mult_time_otm_avx = timedifference_msec(start_matrix_mult_otm_avx, stop_matrix_mult_otm_avx);
+	matrix_mult_time_otm_pthread = timedifference_msec(start_matrix_mult_otm_pthread, stop_matrix_mult_otm_pthread);
 	matrix_read_time = timedifference_msec(start_matrix_read_time, stop_matrix_read_time);
 
 	printf("\n==========================================================================================================================");
 	printf("\nTempo total para leitura das matrizes: (%f ms) | (%f s) | (%f min)\n", matrix_read_time, matrix_read_time/1000, matrix_read_time/60000);
 	printf("\nTempo total para multiplicacao escalar: (%f ms) | (%f s) | (%f min)\n\n", matrix_scalar_time, matrix_scalar_time/1000, matrix_scalar_time/60000);
 	
-	printf("Tempo total para multiplicacao de matrizes A por B: (normal ----------): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time, matrix_mult_time/1000, matrix_mult_time/60000);
-	printf("Tempo total para multiplicacao de matrizes A por B: (otimizado -------): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time_otm, matrix_mult_time_otm/1000, matrix_mult_time_otm/60000);
-	printf("Tempo total para multiplicacao de matrizes A por B: (otimizado com avx): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time_otm_avx, matrix_mult_time_otm_avx/1000, matrix_mult_time_otm_avx/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (normal --------------): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time, matrix_mult_time/1000, matrix_mult_time/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (otimizado -----------): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time_otm, matrix_mult_time_otm/1000, matrix_mult_time_otm/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (otimizado com avx----): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time_otm_avx, matrix_mult_time_otm_avx/1000, matrix_mult_time_otm_avx/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (otimizado com pthread): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time_otm_pthread, matrix_mult_time_otm_pthread/1000, matrix_mult_time_otm_pthread/60000);
 
 	printf("\nTempo total do programa: (%f ms) | (%f s) | (%f min)\n", overall_time, overall_time/1000, overall_time/60000);
 	printf("==========================================================================================================================\n");
+
+	pthread_exit(NULL);
 
 	return 0;
 }

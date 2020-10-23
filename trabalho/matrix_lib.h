@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <immintrin.h>
+#include <pthread.h>
 
 /** Matriz com altura e largura definidas. */
 typedef struct matrix {
@@ -9,6 +10,18 @@ typedef struct matrix {
   unsigned long int width;
   float *rows;
 } Matrix;
+
+/* Estrutura de dados de cada thread de multiplicação de matriz */
+struct thread_data {
+   long thread_id;
+   int offset;
+   int size;
+   int last;
+   int num_threads;
+   Matrix * matrix_A;
+   Matrix * matrix_B;
+   Matrix * matrix_C;
+};
 
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width);
@@ -31,6 +44,9 @@ int matrix_matrix_mult_otm(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando AVX. */
 int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c);
+
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando pthreads. */
+int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads);
 
 
 /** Imprime a matriz fornecida */

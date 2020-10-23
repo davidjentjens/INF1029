@@ -1,0 +1,1 @@
+gcc -mfma -std=c11 -pthread -Wall -o matrix_lib_test matrix_lib_test.c matrix_lib.c timer.c
