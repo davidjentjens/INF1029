@@ -1,5 +1,9 @@
 #include "matrix_lib.h"
 
+#define COLOR_CYAN "\033[0;36m"
+#define COLOR_YELLOW "\033[1;33m"
+#define COLOR_RESET "\033[0m"
+
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width){
   Matrix * matrix = (Matrix *) aligned_alloc(32, sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width));
@@ -169,13 +173,22 @@ int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * ma
   return 1;
 }
 
+void printThreadData(struct thread_data * my_data, int segmentEnd, char * color){
+  printf("%s-----------------\n", color);
+  printf("| Thread #%ld     \n", my_data->thread_id);
+  printf("| last: %d       \n", my_data->last);
+  printf("| offset: %d     \n", my_data->offset); 
+  printf("| segmentEnd: %d \n", segmentEnd);
+  printf("| size: %d       \n", my_data->size);
+  printf("-----------------%s\n", COLOR_RESET);
+}
+
+
 /* Função que será executada por cada thread do algoritmo de multiplicação de matrizes com pthreads */
 void * MultiplyMatrixLine(void * threadarg) {
   unsigned long int i, j, k;
   struct thread_data * my_data;
   my_data = (struct thread_data*) threadarg;
-
-  //printf("Thread #%ld: Multiply array segment\n", my_data->thread_id);
 
   int segmentEnd = (my_data->size / my_data->num_threads) + my_data->offset;
   if(my_data->last){
@@ -184,15 +197,15 @@ void * MultiplyMatrixLine(void * threadarg) {
 
   // printThreadData(my_data, segmentEnd, COLOR_YELLOW);
 
-  Matrix * matrix_a = my_data->matrix_A;
-  Matrix * matrix_b = my_data->matrix_B;
-  Matrix * matrix_c = my_data->matrix_C;
+  Matrix * matrix_a = my_data->matrix_a;
+  Matrix * matrix_b = my_data->matrix_b;
+  Matrix * matrix_c = my_data->matrix_c;
 
-  for(i = 0; i < segmentEnd; i++){
+  for(i = my_data->offset; i < segmentEnd; i++){
     for(j = 0; j < matrix_a->width; j++){
       float position = matrix_a->rows[i * matrix_a->width + j];
 
-       for(k =0; k < matrix_b->width; k++){
+       for(k = 0; k < matrix_b->width; k++){
          matrix_c->rows[i * matrix_c->width + k] += (position * matrix_b->rows[j+matrix_b->width + k]);
        }
     }
@@ -203,6 +216,15 @@ void * MultiplyMatrixLine(void * threadarg) {
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando pthreads. */
 int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads){
+  /* Inicializar variáveis */
+  pthread_t threads[num_threads];
+  pthread_attr_t attr;
+  int rc;
+  long t;
+  struct thread_data thread_data_array[num_threads];
+  void *status;
+  int size = matrix_a->height;
+  
   /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
@@ -213,15 +235,6 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
     printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
     return 0;
   }
-
-  /* Inicializar variáveis */
-  pthread_t threads[num_threads];
-  pthread_attr_t attr;
-  int rc;
-  long t;
-  struct thread_data thread_data_array[num_threads];
-  void *status;
-  int size = matrix_a->height;
 
   if(size % 8*num_threads != 0){
     printf("The array size must be a multiple of (num_threads * 8).\n");
@@ -237,11 +250,11 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
     // printf("In main: creating thread %ld\n", t);
     thread_data_array[t].thread_id = t;
     thread_data_array[t].size = size;
-    thread_data_array[t].offset = (matrix_a->height / num_threads) * t;
+    thread_data_array[t].offset = (size / num_threads) * t;
     thread_data_array[t].num_threads = num_threads;
-    thread_data_array[t].matrix_A = matrix_a;
-    thread_data_array[t].matrix_B = matrix_b;
-    thread_data_array[t].matrix_C = matrix_c;
+    thread_data_array[t].matrix_a = matrix_a;
+    thread_data_array[t].matrix_b = matrix_b;
+    thread_data_array[t].matrix_c = matrix_c;
 
     if(t == num_threads-1){
       thread_data_array[t].last = 1;
@@ -251,6 +264,123 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
     }
 
     rc = pthread_create(&threads[t], NULL, MultiplyMatrixLine, (void *)&thread_data_array[t]);
+    if (rc) {
+      printf("ERROR; return code from pthread_create() is %d\n", rc);
+      exit(-1);
+    }
+  }
+
+  /* Libera atributo e espera pelos outros threads */
+  pthread_attr_destroy(&attr);
+  for(t = 0; t < num_threads; t++) {
+    rc = pthread_join(threads[t], &status);
+    if (rc) {
+      printf("ERROR; return code from pthread_join() is %d\n", rc);
+      exit(-1);
+    }
+    // printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
+  }
+
+  return 1;
+}
+
+
+/* Função que será executada por cada thread do algoritmo de multiplicação de matrizes com avx e pthreads */
+void * MultiplyMatrixLineAvx(void * threadarg) {
+  unsigned long int i, j;
+  struct thread_data * my_data;
+  my_data = (struct thread_data*) threadarg;
+
+  int segmentEnd = (my_data->size / my_data->num_threads) + my_data->offset;
+  if(my_data->last){
+    segmentEnd = my_data->size;
+  }
+
+  // printThreadData(my_data, segmentEnd, COLOR_CYAN);
+
+  /* Declara os três vetores */
+  __m256 vectorA, vectorB, vectorC, result;
+
+  Matrix * matrix_a = my_data->matrix_a;
+  Matrix * matrix_b = my_data->matrix_b;
+  Matrix * matrix_c = my_data->matrix_c;
+
+  float * arrayANext = matrix_a->rows;
+  float * arrayBNext = matrix_b->rows;
+  float * arrayCNext = matrix_c->rows;
+
+  for(i = my_data->offset; i < segmentEnd; i++, arrayANext++){
+
+    vectorA = _mm256_set1_ps(*arrayANext);
+    arrayBNext = matrix_b->rows;
+
+    int row = i / matrix_a->width;
+    arrayCNext = matrix_c->rows + row * matrix_b->width;
+
+    for(j = 0; j < matrix_b->width; j+=8, arrayBNext+=8, arrayCNext+=8){
+      vectorB = _mm256_load_ps(arrayBNext);
+      vectorC = _mm256_load_ps(arrayCNext);
+
+      result = _mm256_fmadd_ps(vectorA, vectorB, vectorC);
+      
+      _mm256_store_ps(arrayCNext, result);
+    }
+
+  }
+
+  pthread_exit(NULL);
+}
+
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando avx e pthreads. */
+int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads){
+  /* Inicializar variáveis */
+  pthread_t threads[num_threads];
+  pthread_attr_t attr;
+  int rc;
+  long t;
+  struct thread_data thread_data_array[num_threads];
+  void *status;
+  int size = matrix_a->height*matrix_a->width;
+
+  /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
+  if(matrix_a == NULL || matrix_b == NULL){
+    printf("\nUma ou duas das matrizes não declaradas.\n");
+    return 0;
+  }
+
+  if(matrix_a->width != matrix_b->height){
+    printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
+    return 0;
+  }
+
+  if(size % 8*num_threads != 0){
+    printf("The array size must be a multiple of (num_threads * 8).\n");
+    return 1;
+  }
+
+  /* Inicializa e define o atributo detached do thread */
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+  /* Cria threads para inicializar os tres arrays em memória */
+  for(t = 0; t < num_threads; t++){
+    // printf("In main: creating thread %ld\n", t);
+    thread_data_array[t].thread_id = t;
+    thread_data_array[t].size = size;
+    thread_data_array[t].offset = (size / num_threads) * t;
+    thread_data_array[t].num_threads = num_threads;
+    thread_data_array[t].matrix_a = matrix_a;
+    thread_data_array[t].matrix_b = matrix_b;
+    thread_data_array[t].matrix_c = matrix_c;
+
+    if(t == num_threads-1){
+      thread_data_array[t].last = 1;
+    }
+    else{
+      thread_data_array[t].last = 0;
+    }
+
+    rc = pthread_create(&threads[t], NULL, MultiplyMatrixLineAvx, (void *)&thread_data_array[t]);
     if (rc) {
       printf("ERROR; return code from pthread_create() is %d\n", rc);
       exit(-1);

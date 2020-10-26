@@ -18,9 +18,9 @@ struct thread_data {
    int size;
    int last;
    int num_threads;
-   Matrix * matrix_A;
-   Matrix * matrix_B;
-   Matrix * matrix_C;
+   Matrix * matrix_a;
+   Matrix * matrix_b;
+   Matrix * matrix_c;
 };
 
 /** Aloca uma matriz com a altura e a largura informadas. */
@@ -48,6 +48,8 @@ int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * ma
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando pthreads. */
 int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads);
 
+/** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando avx e pthreads. */
+int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads);
 
 /** Imprime a matriz fornecida */
 int matrix_print(Matrix * matrix, char * nome);
