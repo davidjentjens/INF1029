@@ -4,6 +4,35 @@
 #define COLOR_YELLOW "\033[1;33m"
 #define COLOR_RESET "\033[0m"
 
+static int thread_num;
+
+/** Determina o número de threads a serem utilizados nas funções que usam threads */
+void set_number_threads(int num_threads){
+  thread_num = num_threads;
+}
+
+/** Função para imprimir os dados de uma thread de multiplicação de matriz por escalar*/
+void printThreadScalarData(struct scalar_thread_data * my_data, int segmentEnd, char * color){
+  printf("%s-----------------\n", color);
+  printf("| Thread #%ld     \n", my_data->thread_id);
+  printf("| last: %d       \n", my_data->last);
+  printf("| offset: %d     \n", my_data->offset); 
+  printf("| segmentEnd: %d \n", segmentEnd);
+  printf("| size: %d       \n", my_data->size);
+  printf("-----------------%s\n", COLOR_RESET);
+}
+
+/** Função para imprimir os dados de uma thread de multiplicação de matrizes */
+void printThreadMatrixData(struct matrix_thread_data * my_data, int segmentEnd, char * color){
+  printf("%s-----------------\n", color);
+  printf("| Thread #%ld     \n", my_data->thread_id);
+  printf("| last: %d       \n", my_data->last);
+  printf("| offset: %d     \n", my_data->offset); 
+  printf("| segmentEnd: %d \n", segmentEnd);
+  printf("| size: %d       \n", my_data->size);
+  printf("-----------------%s\n", COLOR_RESET);
+}
+
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width){
   Matrix * matrix = (Matrix *) aligned_alloc(32, sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width));
@@ -14,6 +43,9 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
   
   return matrix;
 }
+
+
+/** ------------READ MATRIX------------ **/
 
 /** Preenche matriz com um arquivo .dat fornecido. */
 int fill_matrix_with_file(FILE * file, Matrix * matrix){
@@ -54,8 +86,16 @@ int fill_matrix(float value, Matrix * matrix){
   return 1;
 }
 
-/** Multiplica matriz por um valor fornecido. */
+
+/** ----------SCALAR MATRIX MULT---------- **/
+
+/** Multiplica matriz por um valor fornecido da forma mais otimizada disponível. */
 int scalar_matrix_mult(float scalar_value, Matrix * matrix){
+  return scalar_matrix_mult_avx_pthread(scalar_value, matrix);
+}
+
+/** Multiplica matriz por um valor fornecido sem otimizações. */
+int scalar_matrix_mult_normal(float scalar_value, Matrix * matrix){
   if(matrix == NULL){
     printf("\nMatriz não declarada.\n");
     return 0;
@@ -70,9 +110,129 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
   return 1;
 }
 
+/** Multiplica matriz por um valor fornecido com avx. */
+int scalar_matrix_mult_avx(float scalar_value, Matrix * matrix){
+  if(matrix == NULL){
+    printf("\nMatriz não declarada.\n");
+    return 0;
+  }
 
-/** Multiplica matriz A por matriz B de um valor fornecido. */
+  __m256 vector, scalar, result;
+
+  float * arrayNext = matrix->rows;
+
+  for(int i = 0; i < matrix->height*matrix->width; i+=8, arrayNext+=8){
+
+    vector = _mm256_load_ps(arrayNext);
+    scalar = _mm256_set1_ps(scalar_value);
+
+    result = _mm256_mul_ps(vector, scalar);
+      
+    _mm256_store_ps(arrayNext, result);
+  }
+
+  return 1;
+}
+
+void * MultiplyMatrixLineByScalarAvx(void * threadarg) {
+  unsigned long int i;
+  struct scalar_thread_data * my_data;
+  my_data = (struct scalar_thread_data*) threadarg;
+
+  int segmentEnd = (my_data->size / my_data->num_threads) + my_data->offset;
+  if(my_data->last){
+    segmentEnd = my_data->size;
+  }
+
+  __m256 vector, scalar, result;
+
+  float * arrayNext = &my_data->matrix->rows[my_data->offset];
+
+  for(i = my_data->offset; i < segmentEnd; i+=8, arrayNext+=8){
+
+    vector = _mm256_load_ps(arrayNext);
+    scalar = _mm256_set1_ps(my_data->scalar);
+
+    result = _mm256_mul_ps(vector, scalar);
+      
+    _mm256_store_ps(arrayNext, result);
+  }
+
+  pthread_exit(NULL);
+}
+
+/** Multiplica matriz por um valor fornecido com avx e pthreads. */
+int scalar_matrix_mult_avx_pthread(float scalar_value, Matrix * matrix){
+  if(matrix == NULL){
+    printf("\nMatriz não declarada.\n");
+    return 0;
+  }
+
+  pthread_t threads[thread_num];
+  pthread_attr_t attr;
+  int rc;
+  long t;
+  struct scalar_thread_data thread_data_array[thread_num];
+  void *status;
+  int size = matrix->height*matrix->width;
+
+  if(size % 8*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * 8).\n");
+    return 1;
+  }
+
+  /* Inicializa e define o atributo detached do thread */
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+  /* Cria threads para inicializar o array em memória */
+  for(t = 0; t < thread_num; t++){
+    // printf("In main: creating thread %ld\n", t);
+    thread_data_array[t].thread_id = t;
+    thread_data_array[t].size = size;
+    thread_data_array[t].offset = (size / thread_num) * t;
+    thread_data_array[t].num_threads = thread_num;
+    thread_data_array[t].matrix = matrix;
+    thread_data_array[t].scalar = scalar_value;
+
+    if(t == thread_num-1){
+      thread_data_array[t].last = 1;
+    }
+    else{
+      thread_data_array[t].last = 0;
+    }
+
+    rc = pthread_create(&threads[t], NULL, MultiplyMatrixLineByScalarAvx, (void *)&thread_data_array[t]);
+    if (rc) {
+      printf("ERROR; return code from pthread_create() is %d\n", rc);
+      exit(-1);
+    }
+  }
+
+  /* Libera atributo e espera pelos outros threads */
+  pthread_attr_destroy(&attr);
+  for(t = 0; t < thread_num; t++) {
+    rc = pthread_join(threads[t], &status);
+    if (rc) {
+      printf("ERROR; return code from pthread_join() is %d\n", rc);
+      exit(-1);
+    }
+    // printf("Main: completed join with thread %ld having a status of %ld\n",t,(long)status);
+  }
+
+  return 1;
+}
+
+
+/** ----------MATRIX MATRIX MULT---------- **/
+
+/** Multiplica matriz A por matriz B de um valor fornecido da forma mais otimizada disponível. */
 int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
+  return matrix_matrix_mult_otm_avx_pthread(matrix_a, matrix_b, matrix_c);
+}
+
+/** Multiplica matriz A por matriz B de um valor fornecido sem otimizações. */
+int matrix_matrix_mult_normal(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
     return 0;
@@ -173,29 +333,18 @@ int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * ma
   return 1;
 }
 
-void printThreadData(struct thread_data * my_data, int segmentEnd, char * color){
-  printf("%s-----------------\n", color);
-  printf("| Thread #%ld     \n", my_data->thread_id);
-  printf("| last: %d       \n", my_data->last);
-  printf("| offset: %d     \n", my_data->offset); 
-  printf("| segmentEnd: %d \n", segmentEnd);
-  printf("| size: %d       \n", my_data->size);
-  printf("-----------------%s\n", COLOR_RESET);
-}
-
-
 /* Função que será executada por cada thread do algoritmo de multiplicação de matrizes com pthreads */
 void * MultiplyMatrixLine(void * threadarg) {
   unsigned long int i, j, k;
-  struct thread_data * my_data;
-  my_data = (struct thread_data*) threadarg;
+  struct matrix_thread_data * my_data;
+  my_data = (struct matrix_thread_data*) threadarg;
 
   int segmentEnd = (my_data->size / my_data->num_threads) + my_data->offset;
   if(my_data->last){
     segmentEnd = my_data->size;
   }
 
-  // printThreadData(my_data, segmentEnd, COLOR_YELLOW);
+  // printThreadMatrixData(my_data, segmentEnd, COLOR_YELLOW);
 
   Matrix * matrix_a = my_data->matrix_a;
   Matrix * matrix_b = my_data->matrix_b;
@@ -215,29 +364,29 @@ void * MultiplyMatrixLine(void * threadarg) {
 }
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando pthreads. */
-int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads){
-  /* Inicializar variáveis */
-  pthread_t threads[num_threads];
-  pthread_attr_t attr;
-  int rc;
-  long t;
-  struct thread_data thread_data_array[num_threads];
-  void *status;
-  int size = matrix_a->height;
-  
-  /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
+int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
     return 0;
   }
 
+  /* Inicializar variáveis */
+  pthread_t threads[thread_num];
+  pthread_attr_t attr;
+  int rc;
+  long t;
+  struct matrix_thread_data thread_data_array[thread_num];
+  void *status;
+  int size = matrix_a->height;
+  
+  /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
   if(matrix_a->width != matrix_b->height){
     printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
     return 0;
   }
 
-  if(size % 8*num_threads != 0){
-    printf("The array size must be a multiple of (num_threads * 8).\n");
+  if(size % 8*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * 8).\n");
     return 1;
   }
 
@@ -246,17 +395,17 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
   /* Cria threads para inicializar os tres arrays em memória */
-  for(t = 0; t < num_threads; t++){
+  for(t = 0; t < thread_num; t++){
     // printf("In main: creating thread %ld\n", t);
     thread_data_array[t].thread_id = t;
     thread_data_array[t].size = size;
-    thread_data_array[t].offset = (size / num_threads) * t;
-    thread_data_array[t].num_threads = num_threads;
+    thread_data_array[t].offset = (size / thread_num) * t;
+    thread_data_array[t].num_threads = thread_num;
     thread_data_array[t].matrix_a = matrix_a;
     thread_data_array[t].matrix_b = matrix_b;
     thread_data_array[t].matrix_c = matrix_c;
 
-    if(t == num_threads-1){
+    if(t == thread_num-1){
       thread_data_array[t].last = 1;
     }
     else{
@@ -272,7 +421,7 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
 
   /* Libera atributo e espera pelos outros threads */
   pthread_attr_destroy(&attr);
-  for(t = 0; t < num_threads; t++) {
+  for(t = 0; t < thread_num; t++) {
     rc = pthread_join(threads[t], &status);
     if (rc) {
       printf("ERROR; return code from pthread_join() is %d\n", rc);
@@ -284,19 +433,18 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
   return 1;
 }
 
-
 /* Função que será executada por cada thread do algoritmo de multiplicação de matrizes com avx e pthreads */
 void * MultiplyMatrixLineAvx(void * threadarg) {
   unsigned long int i, j;
-  struct thread_data * my_data;
-  my_data = (struct thread_data*) threadarg;
+  struct matrix_thread_data * my_data;
+  my_data = (struct matrix_thread_data*) threadarg;
 
   int segmentEnd = (my_data->size / my_data->num_threads) + my_data->offset;
   if(my_data->last){
     segmentEnd = my_data->size;
   }
 
-  // printThreadData(my_data, segmentEnd, COLOR_CYAN);
+  // printThreadMatrixData(my_data, segmentEnd, COLOR_CYAN);
 
   /* Declara os três vetores */
   __m256 vectorA, vectorB, vectorC, result;
@@ -332,29 +480,29 @@ void * MultiplyMatrixLineAvx(void * threadarg) {
 }
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada, utilizando avx e pthreads. */
-int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c, int num_threads){
-  /* Inicializar variáveis */
-  pthread_t threads[num_threads];
-  pthread_attr_t attr;
-  int rc;
-  long t;
-  struct thread_data thread_data_array[num_threads];
-  void *status;
-  int size = matrix_a->height*matrix_a->width;
-
-  /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
+int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   if(matrix_a == NULL || matrix_b == NULL){
     printf("\nUma ou duas das matrizes não declaradas.\n");
     return 0;
   }
 
+  /* Inicializar variáveis */
+  pthread_t threads[thread_num];
+  pthread_attr_t attr;
+  int rc;
+  long t;
+  struct matrix_thread_data thread_data_array[thread_num];
+  void *status;
+  int size = matrix_a->height*matrix_a->width;
+
+  /* Verifica se as matrizes estão de acordo com as restrições de multiplicação */
   if(matrix_a->width != matrix_b->height){
     printf("\nA matriz A deve ter o número de colunas igual ao número de linhas da matriz B.\n");
     return 0;
   }
 
-  if(size % 8*num_threads != 0){
-    printf("The array size must be a multiple of (num_threads * 8).\n");
+  if(size % 8*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * 8).\n");
     return 1;
   }
 
@@ -363,17 +511,17 @@ int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Mat
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
   /* Cria threads para inicializar os tres arrays em memória */
-  for(t = 0; t < num_threads; t++){
+  for(t = 0; t < thread_num; t++){
     // printf("In main: creating thread %ld\n", t);
     thread_data_array[t].thread_id = t;
     thread_data_array[t].size = size;
-    thread_data_array[t].offset = (size / num_threads) * t;
-    thread_data_array[t].num_threads = num_threads;
+    thread_data_array[t].offset = (size / thread_num) * t;
+    thread_data_array[t].num_threads = thread_num;
     thread_data_array[t].matrix_a = matrix_a;
     thread_data_array[t].matrix_b = matrix_b;
     thread_data_array[t].matrix_c = matrix_c;
 
-    if(t == num_threads-1){
+    if(t == thread_num-1){
       thread_data_array[t].last = 1;
     }
     else{
@@ -389,7 +537,7 @@ int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Mat
 
   /* Libera atributo e espera pelos outros threads */
   pthread_attr_destroy(&attr);
-  for(t = 0; t < num_threads; t++) {
+  for(t = 0; t < thread_num; t++) {
     rc = pthread_join(threads[t], &status);
     if (rc) {
       printf("ERROR; return code from pthread_join() is %d\n", rc);
@@ -401,6 +549,8 @@ int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Mat
   return 1;
 }
 
+
+/** ------------WRITE MATRIX------------ **/
 
 /** Imprime a matriz fornecida */
 int matrix_print(Matrix * matrix, char * nome){
