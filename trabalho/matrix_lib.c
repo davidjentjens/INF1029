@@ -1,5 +1,7 @@
 #include "matrix_lib.h"
 
+#define AVX_STEP 8
+
 #define COLOR_CYAN "\033[0;36m"
 #define COLOR_YELLOW "\033[1;33m"
 #define COLOR_RESET "\033[0m"
@@ -121,7 +123,7 @@ int scalar_matrix_mult_avx(float scalar_value, Matrix * matrix){
 
   float * arrayNext = matrix->rows;
 
-  for(int i = 0; i < matrix->height*matrix->width; i+=8, arrayNext+=8){
+  for(int i = 0; i < matrix->height*matrix->width; i+=AVX_STEP, arrayNext+=AVX_STEP){
 
     vector = _mm256_load_ps(arrayNext);
     scalar = _mm256_set1_ps(scalar_value);
@@ -148,7 +150,7 @@ void * MultiplyMatrixLineByScalarAvx(void * threadarg) {
 
   float * arrayNext = &my_data->matrix->rows[my_data->offset];
 
-  for(i = my_data->offset; i < segmentEnd; i+=8, arrayNext+=8){
+  for(i = my_data->offset; i < segmentEnd; i+=AVX_STEP, arrayNext+=AVX_STEP){
 
     vector = _mm256_load_ps(arrayNext);
     scalar = _mm256_set1_ps(my_data->scalar);
@@ -176,8 +178,8 @@ int scalar_matrix_mult_avx_pthread(float scalar_value, Matrix * matrix){
   void *status;
   int size = matrix->height*matrix->width;
 
-  if(size % 8*thread_num != 0){
-    printf("The array size must be a multiple of (thread_num * 8).\n");
+  if(size % AVX_STEP*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * AVX_STEP).\n");
     return 1;
   }
 
@@ -320,7 +322,7 @@ int matrix_matrix_mult_otm_avx(Matrix * matrix_a, Matrix * matrix_b, Matrix * ma
     int row = i / matrix_a->width;
     arrayCNext = matrix_c->rows + row * matrix_b->width;
 
-    for(int k = 0; k < matrix_b->width; k+=8, arrayBNext+=8, arrayCNext+=8){
+    for(int k = 0; k < matrix_b->width; k+=AVX_STEP, arrayBNext+=AVX_STEP, arrayCNext+=AVX_STEP){
       vectorB = _mm256_load_ps(arrayBNext);
       vectorC = _mm256_load_ps(arrayCNext);
 
@@ -385,8 +387,8 @@ int matrix_matrix_mult_otm_pthread(Matrix * matrix_a, Matrix * matrix_b, Matrix 
     return 0;
   }
 
-  if(size % 8*thread_num != 0){
-    printf("The array size must be a multiple of (thread_num * 8).\n");
+  if(size % AVX_STEP*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * AVX_STEP).\n");
     return 1;
   }
 
@@ -465,7 +467,7 @@ void * MultiplyMatrixLineAvx(void * threadarg) {
     int row = i / matrix_a->width;
     arrayCNext = matrix_c->rows + row * matrix_b->width;
 
-    for(j = 0; j < matrix_b->width; j+=8, arrayBNext+=8, arrayCNext+=8){
+    for(j = 0; j < matrix_b->width; j+=AVX_STEP, arrayBNext+=AVX_STEP, arrayCNext+=AVX_STEP){
       vectorB = _mm256_load_ps(arrayBNext);
       vectorC = _mm256_load_ps(arrayCNext);
 
@@ -501,8 +503,8 @@ int matrix_matrix_mult_otm_avx_pthread(Matrix * matrix_a, Matrix * matrix_b, Mat
     return 0;
   }
 
-  if(size % 8*thread_num != 0){
-    printf("The array size must be a multiple of (thread_num * 8).\n");
+  if(size % AVX_STEP*thread_num != 0){
+    printf("The array size must be a multiple of (thread_num * AVX_STEP).\n");
     return 1;
   }
 
