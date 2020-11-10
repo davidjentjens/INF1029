@@ -15,7 +15,7 @@ __global__
 void add(int n, float *d_x, float *d_y)
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
-  int stride = blockDim.x * gridDim.x
+  int stride = blockDim.x * gridDim.x;
   
   if(index == 0){
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
