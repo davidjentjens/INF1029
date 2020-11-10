@@ -21,7 +21,7 @@ void add(int n, float *d_x, float *d_y)
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
   }
 
-  for (int = index; i < n, i += stride) {
+  for (int i = index; i < n; i += stride) {
     d_y[index] = d_x[index] + d_y[index];
   }
 }
