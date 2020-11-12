@@ -5,7 +5,8 @@ extern "C" {
 #include "timer.h"
 }
 
-#define DATASET_SIZE 2048000
+#define DATASET_SIZE 4096000
+#define MAX_GPU_SIZE 1024000
 
 #define THREADS_PER_BLOCK 256
 #define MAX_BLOCKS_PER_GRID 4096
@@ -111,13 +112,17 @@ int main(int argc, char **argv)
   printf("Running kernel on elemnts of d_x and d_y...");
   gettimeofday(&start, NULL);
 
-  int blockSize = THREADS_PER_BLOCK;
-  int numBlocks = (DATASET_SIZE + blockSize - 1) / blockSize;
-  if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
-  printf("\nblocksize = %d\n", blockSize);
-  printf("numBlocks = %d\n", numBlocks);
+  int numberOfGpuIterations = DATASET_SIZE / MAX_GPU_SIZE;
+  
+  for(int i = 0; i < numberOfGpuIterations; i++){
+    int blockSize = THREADS_PER_BLOCK;
+    int numBlocks = (MAX_GPU_SIZE + blockSize - 1) / blockSize;
+    if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
+    printf("\nblocksize = %d\n", blockSize);
+    printf("numBlocks = %d\n", numBlocks);  
 
-  add<<<numBlocks, blockSize>>>(DATASET_SIZE, d_x, d_y);
+    add<<<numBlocks, blockSize>>>(DATASET_SIZE, d_x, d_y);
+  }
 
   // Wait for GPU to finish before accessing on host
   cudaDeviceSynchronize();
