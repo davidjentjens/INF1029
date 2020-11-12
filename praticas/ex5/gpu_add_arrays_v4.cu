@@ -5,8 +5,8 @@ extern "C" {
 #include "timer.h"
 }
 
-#define DATASET_SIZE 4096000
-#define MAX_GPU_SIZE 1024000
+#define HOST_DATASET_SIZE 4096000
+#define DEVICE_DATASET_SIZE 1024000
 
 #define THREADS_PER_BLOCK 256
 #define MAX_BLOCKS_PER_GRID 4096
@@ -16,8 +16,13 @@ __global__
 void add(int n, float *d_x, float *d_y)
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
   
-  if (index < n) {
+  if(index == 0){
+    printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
+  }
+
+  for (int i = index; i < n; i += stride) {
     d_y[index] = d_x[index] + d_y[index];
   }
 }
@@ -40,8 +45,8 @@ int main(int argc, char **argv)
   printf("Allocating arrays h_x and h_y on host...");
   gettimeofday(&start, NULL);
 
-  h_x = (float*)malloc(DATASET_SIZE*sizeof(float));
-  h_y = (float*)malloc(DATASET_SIZE*sizeof(float));
+  h_x = (float*)malloc(HOST_DATASET_SIZE*sizeof(float));
+  h_y = (float*)malloc(HOST_DATASET_SIZE*sizeof(float));
 
   // check malloc memory allocation
   if (h_x == NULL || h_y == NULL) { 
@@ -56,7 +61,7 @@ int main(int argc, char **argv)
   printf("Allocating array d_x and d_y on device...");
   gettimeofday(&start, NULL);
 
-  cudaError = cudaMalloc(&d_x, DATASET_SIZE*sizeof(float));
+  cudaError = cudaMalloc(&d_x, HOST_DATASET_SIZE*sizeof(float));
 
   // check cudaMalloc memory allocation
   if (cudaError != cudaSuccess) {
@@ -64,7 +69,7 @@ int main(int argc, char **argv)
         return 1;
   }
 
-  cudaError = cudaMalloc(&d_y, DATASET_SIZE*sizeof(float));
+  cudaError = cudaMalloc(&d_y, HOST_DATASET_SIZE*sizeof(float));
 
   // check cudaMalloc memory allocation
   if (cudaError != cudaSuccess) {
@@ -79,7 +84,7 @@ int main(int argc, char **argv)
   printf("Initializing array h_x and h_y on host...");
   gettimeofday(&start, NULL);
 
-  for (i =0; i < DATASET_SIZE; ++i) {
+  for (i = 0; i < HOST_DATASET_SIZE; ++i) {
     h_x[i] = 1.0f;
     h_y[i] = 2.0f;
   }
@@ -87,63 +92,66 @@ int main(int argc, char **argv)
   gettimeofday(&stop, NULL);
   printf("%f ms\n", timedifference_msec(start, stop));
 
-  // Copy array from host to device
-  printf("Copying arrays from host to device...");
-  gettimeofday(&start, NULL);
-
-  cudaError = cudaMemcpy(d_x, h_x, DATASET_SIZE*sizeof(float), cudaMemcpyHostToDevice);
-
-  if (cudaError != cudaSuccess) {
-	printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
-        return 1;
-  }
-
-  cudaError = cudaMemcpy(d_y, h_y, DATASET_SIZE*sizeof(float), cudaMemcpyHostToDevice);
-
-  if (cudaError != cudaSuccess) {
-	printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
-        return 1;
-  }
-
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
-
-  // Run kernel on elements on the GPU
-  printf("Running kernel on elemnts of d_x and d_y...");
-  gettimeofday(&start, NULL);
-
-  int numberOfGpuIterations = DATASET_SIZE / MAX_GPU_SIZE;
+  // Loop to process chunks of the HOST_DATASET on the device
+  int loop_limit = (HOST_DATASET_SIZE + DEVICE_DATASET_SIZE - 1) / DEVICE_DATASET_SIZE;
+  int chunk_size = DEVICE_DATASET_SIZE;
+  for(int count = 0; count < loop_limit; ++count){
+    if(HOST_DATASET_SIZE % DEVICE_DATASET_SIZE != 0 && count == loop_limit - 1){
+      chunk_size = HOST_DATASET_SIZE - DEVICE_DATASET_SIZE;
+    }
   
-  for(int i = 0; i < numberOfGpuIterations; i++){
+    // Copy array from host to device
+    printf("Copying arrays from host to device...");
+    gettimeofday(&start, NULL);
+
+    cudaError = cudaMemcpy(d_x, h_x+(count*DEVICE_DATASET_SIZE), chunk_size*sizeof(float), cudaMemcpyHostToDevice);
+
+    if (cudaError != cudaSuccess) {
+    printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+          return 1;
+    }
+
+    cudaError = cudaMemcpy(d_y, h_y+(count*DEVICE_DATASET_SIZE), chunk_size*sizeof(float), cudaMemcpyHostToDevice);
+
+    if (cudaError != cudaSuccess) {
+    printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+          return 1;
+    }
+
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
+
+    // Run kernel on elements on the GPU
+    printf("Running kernel on elemnts of d_x and d_y...");
+    gettimeofday(&start, NULL);
+
     int blockSize = THREADS_PER_BLOCK;
-    int numBlocks = (MAX_GPU_SIZE + blockSize - 1) / blockSize;
+    int numBlocks = (chunk_size + blockSize - 1) / blockSize;
     if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
-    printf("\nblocksize = %d\n", blockSize);
-    printf("numBlocks = %d\n", numBlocks);  
 
-    add<<<numBlocks, blockSize>>>(DATASET_SIZE, d_x, d_y);
+    add<<<numBlocks, blockSize>>>(chunk_size, d_x, d_y);
+
+    // Wait for GPU to finish before accessing on host
+    cudaDeviceSynchronize();
+
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
+
+    // Copy array from device to host
+    printf("Copying array from device (d_y) to host (h_y)...");
+    gettimeofday(&start, NULL);
+
+    cudaError = cudaMemcpy(h_y+(count+DEVICE_DATASET_SIZE), d_y, chunk_size*sizeof(float), cudaMemcpyDeviceToHost);
+
+    if (cudaError != cudaSuccess)
+    {
+    printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+    return 1;
+    }
+
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
   }
-
-  // Wait for GPU to finish before accessing on host
-  cudaDeviceSynchronize();
-
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
-
-  // Copy array from device to host
-  printf("Copying array from device (d_y) to host (h_y)...");
-  gettimeofday(&start, NULL);
-
-  cudaError = cudaMemcpy(h_y, d_y, DATASET_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
-
-  if (cudaError != cudaSuccess)
-  {
-	printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
-	return 1;
-  }
-
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
 
   // Check for errors (all values should be 3.0f)
   printf("Checking for processing errors...");
@@ -151,7 +159,7 @@ int main(int argc, char **argv)
 
   float maxError = 0.0f;
   float diffError = 0.0f;
-  for (i = 0; i < DATASET_SIZE; i++) {
+  for (i = 0; i < HOST_DATASET_SIZE; i++) {
     maxError = (maxError > (diffError=fabs(h_y[i]-3.0f)))? maxError : diffError;
     //printf("%d -> %f\n", i, h_y[i]);
   }
