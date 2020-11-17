@@ -3,7 +3,6 @@
 #include <string.h>
 #include <immintrin.h>
 #include <pthread.h>
-#include <cuda_runtime.h>
 
 /** Matriz com altura e largura definidas. */
 typedef struct matrix {

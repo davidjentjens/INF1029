@@ -97,7 +97,7 @@ int main(int argc, char **argv)
   int chunk_size = DEVICE_DATASET_SIZE;
   for(int count = 0; count < loop_limit; ++count){
     if(HOST_DATASET_SIZE % DEVICE_DATASET_SIZE != 0 && count == loop_limit - 1){
-      chunk_size = HOST_DATASET_SIZE % DEVICE_DATASET_SIZE;
+      chunk_size = HOST_DATASET_SIZE - DEVICE_DATASET_SIZE;
     }
   
     // Copy array from host to device
