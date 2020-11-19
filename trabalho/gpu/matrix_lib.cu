@@ -139,7 +139,8 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 
     int blockSize = threads_per_block;
     int numBlocks = (chunk_size + blockSize - 1) / blockSize;
-    if (numBlocks > max_blocks_per_grid) numBlocks = max_blocks_per_grid;
+    if (numBlocks > max_blocks_per_grid) 
+        numBlocks = max_blocks_per_grid;
 
     mult_scalar<<<numBlocks, blockSize>>>(chunk_size, matrix->d_rows, scalar_value);
 
@@ -160,6 +161,24 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 
 
 /** ----------MATRIX MATRIX MULT---------- **/
+
+// Kernel function to mult to array
+__global__ 
+void matrix_mult(Matrix * matrix_a, Matrix * matrix_b, float * d_a, float * d_b, float *d_c)
+{
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
+
+  limit = matrix_a->height * matrix_b->width;
+  
+  if(index == 0){
+    printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
+  }
+
+  for (int i = index; i < limit; i += stride) {
+
+  }
+}
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada utilizando a GPU. */
 int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
