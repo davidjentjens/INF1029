@@ -34,7 +34,7 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
   matrix->height = matrix_height;
   matrix->width = matrix_width;
   matrix->h_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
-  matrix->d_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
+  //matrix->d_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
   // check malloc memory allocation
   if (matrix->h_rows == NULL) { 
     printf("Error: malloc unable to allocate memory on host.");
@@ -129,7 +129,7 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
       chunk_size = HOST_DATASET_SIZE % DEVICE_DATASET_SIZE;
     }
 
-    cudaError = cudaMemcpy(matrix->d_rows, matrix->h_rows+(count*DEVICE_DATASET_SIZE), chunk_size*sizeof(float), cudaMemcpyHostToDevice);
+    cudaError = cudaMemcpy(matrix->d_rows, matrix->h_rows+(count*DEVICE_DATASET_SIZE), chunk_size*sizeof(int), cudaMemcpyHostToDevice);
 
     if (cudaError != cudaSuccess) {
       printf("cudaMemcpy (h -> d) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
