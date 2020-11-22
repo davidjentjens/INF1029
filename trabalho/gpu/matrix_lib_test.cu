@@ -100,7 +100,7 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pela matriz B e cronometrando o tempo
 	gettimeofday(&start_matrix_mult, NULL);
 	printf("\nMultiplicando matriz A por matriz B...\n");
-	error = matrix_matrix_mult(mA, mB, mC);
+	//error = matrix_matrix_mult(mA, mB, mC);
 	gettimeofday(&stop_matrix_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B");
@@ -109,7 +109,7 @@ int main(int argc, char **argv){
 	// Comandos para debugging do resultado
 	// matrix_print(mC, "C");
 
-	error = write_matrix_to_file(result2, mC);
+	//error = write_matrix_to_file(result2, mC);
 	if(error == 0){
 		printf("Erro ao escrever matriz no arquivo .dat");
 	}

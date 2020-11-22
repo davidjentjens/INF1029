@@ -169,7 +169,7 @@ void matrix_mult(Matrix * matrix_a, Matrix * matrix_b, float * d_a, float * d_b,
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
 
-  limit = matrix_a->height * matrix_b->width;
+  int limit = matrix_a->height * matrix_b->width;
   
   if(index == 0){
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
