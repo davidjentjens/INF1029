@@ -27,7 +27,7 @@ int set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param){
 
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width){
-  cudaError_t cudaError;
+  
   Matrix * matrix = (Matrix *) malloc(sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width) + (DEVICE_DATASET_SIZE * sizeof(float)));
   
   matrix->height = matrix_height;
@@ -87,7 +87,7 @@ int fill_matrix(float value, Matrix * matrix){
 
   for(int i = 0; i < matrix->height; i++){
     for (int j = 0; j < matrix->width; j++){
-      matrix->rows[i * matrix->width + j] = value;
+      matrix->h_rows[i * matrix->width + j] = value;
     }
   }
 
