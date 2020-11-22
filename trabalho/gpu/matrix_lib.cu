@@ -41,7 +41,7 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
     return 0;
   }
 
-  cudaError = cudaMalloc(&(matrix->d_rows), matrix_height*matrix_width*sizeof(float));
+  cudaError = cudaMalloc(&(matrix->d_rows), DEVICE_DATASET_SIZE *sizeof(float));
 
   // check cudaMalloc memory allocation
   if (cudaError != cudaSuccess) {
