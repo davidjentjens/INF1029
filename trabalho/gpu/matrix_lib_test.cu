@@ -86,7 +86,7 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pelo valor escalar e cronometrando o tempo
 	gettimeofday(&start_scalar_mult, NULL);
 	printf("\nMultiplicando matriz A por %.3f...\n", scalar);
-	error = scalar_matrix_mult_normal(scalar, mA);
+	error = scalar_matrix_mult(scalar, mA);
 	gettimeofday(&stop_scalar_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplicar matriz A por escalar");
@@ -135,14 +135,13 @@ int main(int argc, char **argv){
 	printf("\n==========================================================================================================================");
 	printf("\nTempo total para leitura das matrizes: (%f ms) | (%f s) | (%f min)\n", matrix_read_time, matrix_read_time/1000, matrix_read_time/60000);
 	
-	printf("\nTempo total para multiplicacao escalar: (normal ----------) (%f ms) | (%f s) | (%f min)\n", matrix_scalar_time, matrix_scalar_time/1000, matrix_scalar_time/60000);
+	printf("\nTempo total para multiplicacao escalar: (%f ms) | (%f s) | (%f min)\n", matrix_scalar_time, matrix_scalar_time/1000, matrix_scalar_time/60000);
 
-	printf("Tempo total para multiplicacao de matrizes A por B: (normal --------------------): (%f ms) | (%f s) | (%f min)\n", matrix_mult_time, matrix_mult_time/1000, matrix_mult_time/60000);
+	printf("Tempo total para multiplicacao de matrizes A por B: (%f ms) | (%f s) | (%f min)\n", matrix_mult_time, matrix_mult_time/1000, matrix_mult_time/60000);
 
 	printf("\nTempo total do programa: (%f ms) | (%f s) | (%f min)\n", overall_time, overall_time/1000, overall_time/60000);
 	printf("==========================================================================================================================\n");
 
-	pthread_exit(NULL);
 
 	return 0;
 }
