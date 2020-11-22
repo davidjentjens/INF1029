@@ -38,8 +38,15 @@ int main(int argc, char **argv){
     // Setando o tamanho de grid
     int threads_per_block_param = atoi(argv[6]);
     int max_blocks_per_grid_param = atoi(argv[7]);
-    set_grid_size(threads_per_block_param,max_blocks_per_grid_param);
-    
+    error = set_grid_size(threads_per_block_param,max_blocks_per_grid_param);
+	if (error == 1)
+	{
+		printf("Valores aceitos com sucesso\n");
+	}
+	else
+	{
+		printf("Erro! Valores utilizados sao os default\n");
+	}
 	// Read & Write dos arquivos de entrada e saida
 	file1 = fopen(argv[8],"rb");
 	file2 = fopen(argv[9],"rb");

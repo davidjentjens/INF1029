@@ -19,10 +19,10 @@ void set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param){
     threads_per_block = threads_per_block_param;
     max_blocks_per_grid = max_blocks_per_grid_param;
 
-    return 1;
+    //return 1;
   }
   
-  return 0;
+  //return 0;
 }
 
 /** Aloca uma matriz com a altura e a largura informadas. */

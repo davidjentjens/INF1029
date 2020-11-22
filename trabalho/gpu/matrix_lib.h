@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <immintrin.h>
-#include <pthread.h>
 
 /** Matriz com altura e largura definidas. */
 typedef struct matrix {
