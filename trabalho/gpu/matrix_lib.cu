@@ -196,10 +196,10 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   for(int i = 0; i < matrix_a->height; i++){
 
     for(int j=0; j < matrix_a->width; j++){
-      float position = matrix_a->rows[i * matrix_a->width + j];
+      float position = matrix_a->h_rows[i * matrix_a->width + j];
 
        for(int k =0; k < matrix_b->width; k++){
-         matrix_c->rows[i * matrix_c->width + k] += (position * matrix_b->rows[j+matrix_b->width + k]);
+         matrix_c->h_rows[i * matrix_c->width + k] += (position * matrix_b->h_rows[j+matrix_b->width + k]);
        }
     }
 
@@ -223,7 +223,7 @@ int matrix_print(Matrix * matrix, char * nome){
 
   for(int i = 0; i < matrix->height; i++){
     for (int j = 0; j < matrix->width; j++){
-      printf("%.3f, ", matrix->rows[i * matrix->width + j]);
+      printf("%.3f, ", matrix->h_rows[i * matrix->width + j]);
     }
     printf("\n");
   }
@@ -238,7 +238,7 @@ int write_matrix_to_file(FILE * file, Matrix * matrix){
   }
 
   for(int i=0; i<matrix->height*matrix->width; i++){	
- 		fwrite((void*)(&matrix->rows[i]), sizeof(matrix->rows[i]), 1, file);
+ 		fwrite((void*)(&matrix->h_rows[i]), sizeof(matrix->h_rows[i]), 1, file);
 	}
 
   return 1;
