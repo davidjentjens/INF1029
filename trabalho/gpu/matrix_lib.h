@@ -9,9 +9,9 @@ typedef struct matrix {
    float *h_rows;
    float *d_rows;
 } Matrix;
-
+cudaError_t cudaError;
 /** Determina o número de threads por bloco e o número máximo de blocos por grid */
-void set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param);
+int set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param);
 
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width);

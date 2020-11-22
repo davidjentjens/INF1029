@@ -14,26 +14,26 @@ static int threads_per_block = 256;
 static int max_blocks_per_grid = 4096;
 
 /** Determina o número de threads por bloco e o número máximo de blocos por grid */
-void set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param){
+int set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param){
   if(threads_per_block_param < THREADS_PER_BLOCK_LIMIT && max_blocks_per_grid_param < MAX_BLOCKS_PER_GRID_LIMIT){
     threads_per_block = threads_per_block_param;
     max_blocks_per_grid = max_blocks_per_grid_param;
 
-    //return 1;
+    return 1;
   }
   
-  //return 0;
+  return 0;
 }
 
 /** Aloca uma matriz com a altura e a largura informadas. */
 Matrix * create_matrix(int matrix_height, int matrix_width){
-  
+  cudaError_t cudaError;
   Matrix * matrix = (Matrix *) malloc(sizeof(int) * 2 + sizeof(float) * (matrix_height*matrix_width) + (DEVICE_DATASET_SIZE * sizeof(float)));
   
   matrix->height = matrix_height;
   matrix->width = matrix_width;
   matrix->h_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
-  matrix->d_rows = (float *) malloc(DEVICE_DATASET_SIZE * sizeof(float))
+  matrix->d_rows = (float *) malloc(DEVICE_DATASET_SIZE * sizeof(float));
 
   // check malloc memory allocation
   if (matrix->h_rows == NULL) { 
@@ -45,8 +45,7 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
 
   // check cudaMalloc memory allocation
   if (cudaError != cudaSuccess) {
-    printf("cudaMalloc d_x returned error %s (code %d)\n",
-    cudaGetErrorString(cudaError), cudaError);
+    printf("cudaMalloc d_x returned error %s (code %d)\n",cudaGetErrorString(cudaError), cudaError);
     return 0;
   }
 
