@@ -34,8 +34,7 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
   matrix->height = matrix_height;
   matrix->width = matrix_width;
   matrix->h_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
-  matrix->d_rows = (float *) malloc(DEVICE_DATASET_SIZE * sizeof(float));
-
+  //matrix->d_rows = (float *) malloc(DEVICE_DATASET_SIZE * sizeof(float));
   // check malloc memory allocation
   if (matrix->h_rows == NULL) { 
     printf("Error: malloc unable to allocate memory on host.");
