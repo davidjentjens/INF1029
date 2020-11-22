@@ -5,7 +5,6 @@
 #define COLOR_YELLOW "\033[1;33m"
 #define COLOR_RESET "\033[0m"
 
-#define HOST_DATASET_SIZE 4096000
 #define DEVICE_DATASET_SIZE 1024000
 
 #define THREADS_PER_BLOCK_LIMIT 1024
@@ -33,15 +32,15 @@ Matrix * create_matrix(int matrix_height, int matrix_width){
   
   matrix->height = matrix_height;
   matrix->width = matrix_width;
-  matrix->h_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
-  //matrix->d_rows = (float *) malloc(matrix_height * matrix_width * sizeof(float));
+  matrix->h_rows = (float *) malloc(matrix_height*matrix_width * sizeof(float));
+
   // check malloc memory allocation
   if (matrix->h_rows == NULL) { 
     printf("Error: malloc unable to allocate memory on host.");
     return 0;
   }
 
-  cudaError = cudaMalloc(&(matrix->d_rows), matrix_height*matrix_width*sizeof(float));
+  cudaError = cudaMalloc(&(matrix->d_rows), DEVICE_DATASET_SIZE*sizeof(float));
 
   // check cudaMalloc memory allocation
   if (cudaError != cudaSuccess) {
@@ -125,11 +124,11 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
   int loop_limit = (matrix_size + DEVICE_DATASET_SIZE - 1) / DEVICE_DATASET_SIZE;
   int chunk_size = DEVICE_DATASET_SIZE;
   for(int count = 0; count < loop_limit; ++count){
-    if(HOST_DATASET_SIZE % DEVICE_DATASET_SIZE != 0 && count == loop_limit - 1){
-      chunk_size = HOST_DATASET_SIZE % DEVICE_DATASET_SIZE;
+    if(matrix_size % DEVICE_DATASET_SIZE != 0 && count == loop_limit - 1){
+      chunk_size = matrix_size % DEVICE_DATASET_SIZE;
     }
     
-    cudaError = cudaMemcpy(matrix->h_rows+(count*DEVICE_DATASET_SIZE),matrix->d_rows, chunk_size*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaError = cudaMemcpy(matrix->h_rows+(count*chunk_size),matrix->d_rows, chunk_size*sizeof(float), cudaMemcpyDeviceToHost);
 
     if (cudaError != cudaSuccess) {
       printf("cudaMemcpy (h -> d) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
