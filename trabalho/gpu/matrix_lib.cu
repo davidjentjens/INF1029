@@ -128,8 +128,8 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
     if(HOST_DATASET_SIZE % DEVICE_DATASET_SIZE != 0 && count == loop_limit - 1){
       chunk_size = HOST_DATASET_SIZE % DEVICE_DATASET_SIZE;
     }
-
-    cudaError = cudaMemcpy(matrix->h_rows+(count*chunk_size), matrix->d_rows,  chunk_size*sizeof(float), cudaMemcpyHostToDevice);
+    
+    cudaError = cudaMemcpy(matrix->h_rows+(count*DEVICE_DATASET_SIZE),matrix->d_rows, chunk_size*sizeof(float), cudaMemcpyDeviceToHost);
 
     if (cudaError != cudaSuccess) {
       printf("cudaMemcpy (h -> d) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
