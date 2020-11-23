@@ -185,10 +185,10 @@ void matrix_mult(int n, int matrix_a_width, int matrix_b_width, float * matrix_a
     arrayCNext = matrix_c_rows + row * matrix_b_width;
 
     for(int k = 0; k < matrix_b_width; k++, arrayBNext++, arrayCNext++){
-      // printf("%f\n", (*arrayANext) * (*arrayBNext));
+      printf("%f\n", (*arrayANext) * (*arrayBNext));
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
-  } 
+  }
 }
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada utilizando a GPU. */
