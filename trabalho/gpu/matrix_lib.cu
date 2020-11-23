@@ -210,7 +210,7 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
 /** ------------WRITE MATRIX------------ **/
 
 /** Imprime a matriz fornecida */
-int matrix_print(Matrix * matrix, char * nome){
+int matrix_print(Matrix * matrix, const char * nome){
   if(matrix == NULL){
     printf("\nMatriz não declarada.\n");
     return 0;

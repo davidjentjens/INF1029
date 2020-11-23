@@ -37,7 +37,7 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c);
 /** ------------WRITE MATRIX------------ **/
 
 /** Imprime a matriz fornecida */
-int matrix_print(Matrix * matrix, char * nome);
+int matrix_print(Matrix * matrix, const char * nome);
 
 /** Escreve matriz para um arquivo .dat */
 int write_matrix_to_file(FILE * file, Matrix * matrix);
