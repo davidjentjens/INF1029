@@ -181,10 +181,10 @@ void matrix_mult(int n, int matrix_a_width, int matrix_b_width, float * matrix_a
   for(int i = 0; i < n; i += stride, arrayANext += stride){
     arrayBNext = matrix_b_rows;
 
-    int row = i / matrix_a->width;
-    arrayCNext = matrix_c_rows + row * matrix_b_rows;
+    int row = i / matrix_a_width;
+    arrayCNext = matrix_c_rows + row * matrix_b_width;
 
-    for(int k = 0; k < matrix_b_rows; k++, arrayBNext++, arrayCNext++){
+    for(int k = 0; k < matrix_b_width; k++, arrayBNext++, arrayCNext++){
       // printf("%f\n", (*arrayANext) * (*arrayBNext));
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
