@@ -181,7 +181,7 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
   float * arrayCNext = matrix_c->d_rows;
 
   for(int i = 0; i < n; i += stride, arrayANext += stride){
-    printf("PPPPPPPPPPPPPPPP\n");
+    printf("OOOOOOOOOOOOOOO\n");
 
     arrayBNext = matrix_b->d_rows;
 
@@ -189,7 +189,8 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
     arrayCNext = matrix_c->d_rows + row * matrix_b->width;
 
     for(int k = 0; k < matrix_b->width; k++, arrayBNext++, arrayCNext++){
-      printf("%d\n", (*arrayANext) * (*arrayBNext));
+      printf("KKKKKKKKKKKKKKKK\n");
+      printf("%f\n", (*arrayANext) * (*arrayBNext));
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
   } 
