@@ -110,24 +110,16 @@ int main(int argc, char **argv){
 	// Comandos para debugging do resultado
 	matrix_print(mC, "C");
 
-	printf("CUDA 1\n");
-
-	//error = write_matrix_to_file(result2, mC);
+	error = write_matrix_to_file(result2, mC);
 	if(error == 0){
 		printf("Erro ao escrever matriz no arquivo .dat");
 	}
-
-	printf("CUDA 2\n");
 
 	// Fechando arquivos .dat
 	fclose(file1);
 	fclose(file2);
 	fclose(result1);
-	printf("CUDA 3\n");
-
 	fclose(result2);
-
-	printf("CUDA 4\n");
 
 	// Liberando memoria das matrizes
 	cudaFree(mA->d_rows);
