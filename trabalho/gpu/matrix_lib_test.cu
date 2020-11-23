@@ -123,7 +123,11 @@ int main(int argc, char **argv){
 	fclose(file1);
 	fclose(file2);
 	fclose(result1);
+	printf("CUDA 3\n");
+
 	fclose(result2);
+
+	printf("CUDA 4\n");
 
 	// Liberando memoria das matrizes
 	cudaFree(mA->d_rows);
