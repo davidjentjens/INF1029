@@ -1,6 +1,6 @@
-#include "matrix_lib.cu"
+#include "matrix_lib.h"
 extern "C" {
-#include "timer.h"
+	#include "timer.h"
 }
 
 int main(int argc, char **argv){
