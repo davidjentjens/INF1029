@@ -174,16 +174,16 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
   }
 
-  float * arrayANext = matrix_a->rows;
-  float * arrayBNext = matrix_b->rows;
-  float * arrayCNext = matrix_c->rows;
+  float * arrayANext = matrix_a->d_rows;
+  float * arrayBNext = matrix_b->d_rows;
+  float * arrayCNext = matrix_c->d_rows;
 
   for(int i = 0; i < n; i += stride, arrayANext+=stride){
 
     arrayBNext = matrix_b->d_rows;
 
     int row = i / matrix_a->width;
-    arrayCNext = matrix_c->rows + row * matrix_b->width;
+    arrayCNext = matrix_c->d_rows + row * matrix_b->width;
 
     for(int k = 0; k < matrix_a->width; k++, arrayBNext++, arrayCNext++){
       *arrayCNext = (*arrayANext) * (*arrayBNext);
