@@ -84,7 +84,6 @@ int main(int argc, char **argv){
 	
 	// Preenchendo a matriz C com zeros
 	fill_matrix(0, mC);
-	matrix_print(mA, "A");
 	// Multiplicando matriz A pelo valor escalar e cronometrando o tempo
 	gettimeofday(&start_scalar_mult, NULL);
 	printf("\nMultiplicando matriz A por %.3f...\n", scalar);
@@ -102,14 +101,14 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pela matriz B e cronometrando o tempo
 	gettimeofday(&start_matrix_mult, NULL);
 	printf("\nMultiplicando matriz A por matriz B...\n");
-	//error = matrix_matrix_mult(mA, mB, mC);
+	error = matrix_matrix_mult(mA, mB, mC);
 	gettimeofday(&stop_matrix_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplar matriz A por matriz B");
 	}
 
 	// Comandos para debugging do resultado
-	matrix_print(mA, "D");
+	matrix_print(mC, "C");
 
 	//error = write_matrix_to_file(result2, mC);
 	if(error == 0){
