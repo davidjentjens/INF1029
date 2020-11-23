@@ -121,10 +121,14 @@ int main(int argc, char **argv){
 	fclose(result1);
 	fclose(result2);
 
+	printf("TOCA\n");
+
 	// Liberando memoria das matrizes
-	cudaFree(mA);
-	cudaFree(mB);
-	cudaFree(mC);
+	cudaFree(mA->d_rows);
+	cudaFree(mB->d_rows);
+	cudaFree(mC->d_rows);
+
+	printf("TOCA 2\n");
 	
 	gettimeofday(&overall_t2, NULL);
 
