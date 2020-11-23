@@ -84,7 +84,7 @@ int main(int argc, char **argv){
 	
 	// Preenchendo a matriz C com zeros
 	fill_matrix(0, mC);
-	matrix_print(mA, "A_antes");
+	matrix_print(mA, 'A');
 	// Multiplicando matriz A pelo valor escalar e cronometrando o tempo
 	gettimeofday(&start_scalar_mult, NULL);
 	printf("\nMultiplicando matriz A por %.3f...\n", scalar);
@@ -109,7 +109,7 @@ int main(int argc, char **argv){
 	}
 
 	// Comandos para debugging do resultado
-	matrix_print(mA, "A_depois");
+	matrix_print(mA, 'D');
 
 	//error = write_matrix_to_file(result2, mC);
 	if(error == 0){
