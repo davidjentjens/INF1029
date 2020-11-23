@@ -232,7 +232,7 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
       numBlocks = max_blocks_per_grid;
     }
   
-    matrix_mult<<<numBlocks, blockSize>>>(chunk_size, matrix_a->width, matrix_b->width, matrix_a->d_rows, matrix_b->d_rows, matrix_c->d_rows);
+    matrix_mult<<<numBlocks, blockSize>>>(chunk_size, matrix_a->width, matrix_a->height, matrix_b->height, matrix_b->width, matrix_a->d_rows, matrix_b->d_rows, matrix_c->d_rows);
 
     // Wait for GPU to finish before accessing on host
     cudaDeviceSynchronize();
