@@ -186,6 +186,7 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
     arrayCNext = matrix_c->d_rows + row * matrix_b->width;
 
     for(int k = 0; k < matrix_b->width; k++, arrayBNext++, arrayCNext++){
+      printf("%d\n", (*arrayANext) * (*arrayBNext);
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
   } 
