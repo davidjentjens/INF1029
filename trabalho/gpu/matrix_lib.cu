@@ -167,7 +167,7 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 __global__ 
 void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
 {
-  printf("PPPPPPPPPPPPPPPP\n");
+  //printf("PPPPPPPPPPPPPPPP\n");
 
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
@@ -181,6 +181,7 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
   float * arrayCNext = matrix_c->d_rows;
 
   for(int i = 0; i < n; i += stride, arrayANext += stride){
+    printf("PPPPPPPPPPPPPPPP\n");
 
     arrayBNext = matrix_b->d_rows;
 
