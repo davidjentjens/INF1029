@@ -266,9 +266,7 @@ int matrix_print(Matrix * matrix, const char * nome){
     }
     printf("\n");
   }
-
-  printf("CUDA\n");
-
+  
   return 1;
 }
 

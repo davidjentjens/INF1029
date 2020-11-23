@@ -110,6 +110,8 @@ int main(int argc, char **argv){
 	// Comandos para debugging do resultado
 	matrix_print(mC, "C");
 
+	printf("CUDA\n");
+
 	//error = write_matrix_to_file(result2, mC);
 	if(error == 0){
 		printf("Erro ao escrever matriz no arquivo .dat");
