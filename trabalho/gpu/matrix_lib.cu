@@ -108,7 +108,7 @@ void mult_scalar(int n, float *matrix_rows, float scalar_value)
   }
 
   for (int i = index; i < n; i += stride) {
-    matrix_rows[index] = matrix_rows[index] * scalar_value;
+    matrix_rows[i] = matrix_rows[i] * scalar_value;
   }
 }
 

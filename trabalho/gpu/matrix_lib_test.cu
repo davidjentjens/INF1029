@@ -37,10 +37,10 @@ int main(int argc, char **argv){
 	int mB_height = atoi(argv[4]);
 	int mB_width = atoi(argv[5]);
 	
-    // Setando o tamanho de grid
-    int threads_per_block_param = atoi(argv[6]);
-    int max_blocks_per_grid_param = atoi(argv[7]);
-    error = set_grid_size(threads_per_block_param,max_blocks_per_grid_param);
+	// Setando o tamanho de grid
+	int threads_per_block_param = atoi(argv[6]);
+	int max_blocks_per_grid_param = atoi(argv[7]);
+	error = set_grid_size(threads_per_block_param,max_blocks_per_grid_param);
 	if (error == 1)
 	{
 		printf("Valores aceitos com sucesso\n");
