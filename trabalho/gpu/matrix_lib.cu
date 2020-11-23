@@ -177,8 +177,6 @@ void matrix_mult(int n, int matrix_a_width,int matrix_a_height, int matrix_b_hei
   for(int i = index; i < n; i+= stride){
 
     for(int k =0; k < matrix_a_width; k++){
-      printf("%fA-\n", matrix_a_rows[matrix_a_width*(i/matrix_a_height) + k]);
-      printf("%fB--\n", matrix_b_rows[ (i%matrix_a_height) + k*matrix_b_width]);
       matrix_c_rows[i] += matrix_a_rows[matrix_a_width*(i/matrix_a_height) + k] * matrix_b_rows[(i%matrix_a_height) + k*matrix_b_width];
     }
   }

@@ -108,7 +108,7 @@ int main(int argc, char **argv){
 	}
 
 	// Comandos para debugging do resultado
-	matrix_print(mB, "B");
+	matrix_print(mC, "C");
 
 	//error = write_matrix_to_file(result2, mC);
 	if(error == 0){
