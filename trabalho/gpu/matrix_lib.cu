@@ -208,6 +208,8 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
 
   int matrix_size = matrix_a->height * matrix_a->width;
 
+  printf("%d",matrix_size);
+
   int loop_limit = (matrix_size + DEVICE_DATASET_SIZE - 1) / DEVICE_DATASET_SIZE;
   int chunk_size = DEVICE_DATASET_SIZE;
   for(int count = 0; count < loop_limit; ++count){
