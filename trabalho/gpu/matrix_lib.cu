@@ -165,7 +165,7 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 
 // Kernel function to mult to array
 __global__ 
-void matrix_mult(int n, int matrix_a_width, int matrix_b_width, float * matrix_a_rows, float * matrix_b_rows, float * matrix_c_rows)
+void matrix_mult(int n, int matrix_a_width,int matrix_a_height, int matrix_b_height, int matrix_b_width, float * matrix_a_rows, float * matrix_b_rows, float * matrix_c_rows)
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
@@ -174,21 +174,13 @@ void matrix_mult(int n, int matrix_a_width, int matrix_b_width, float * matrix_a
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
   }
 
-  float * arrayANext = matrix_a_rows;
-  float * arrayBNext = matrix_b_rows;
-  float * arrayCNext = matrix_c_rows;
+  for(int i = index; i < n; i+= stride){
 
-  for(int i = 0; i < n; i += stride, arrayANext += stride){
-    arrayBNext = matrix_b_rows;
-
-    int row = i / matrix_a_width;
-    arrayCNext = matrix_c_rows + row * matrix_b_width;
-
-    for(int k = 0; k < matrix_b_width; k++, arrayBNext++, arrayCNext++){
-      printf("%f\n", (*arrayANext) * (*arrayBNext));
-      *arrayCNext = (*arrayANext) * (*arrayBNext);
+    for(int k =0; k < matrix_a_width; k++){
+      matrix_c_rows[i] += matrix_a_rows[matrix_a_width*(i/matrix_a_height) + k] * matrix_b_rows[ (i%matrix_a_height) + k*matrix_b_width];
     }
   }
+
 }
 
 /** Multiplica matriz A por matriz B de um valor fornecido de uma forma otimizada utilizando a GPU. */
