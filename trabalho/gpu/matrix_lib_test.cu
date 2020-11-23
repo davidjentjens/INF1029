@@ -87,7 +87,7 @@ int main(int argc, char **argv){
 	// Multiplicando matriz A pelo valor escalar e cronometrando o tempo
 	gettimeofday(&start_scalar_mult, NULL);
 	printf("\nMultiplicando matriz A por %.3f...\n", scalar);
-	error = scalar_matrix_mult(scalar, mA);
+	error = scalar_matrix_mult(scalar, mB);
 	gettimeofday(&stop_scalar_mult, NULL);
 	if(error == 0){
 		printf("Erro função de multiplicar matriz A por escalar");
