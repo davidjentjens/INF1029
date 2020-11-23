@@ -178,14 +178,14 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
   float * arrayBNext = matrix_b->d_rows;
   float * arrayCNext = matrix_c->d_rows;
 
-  for(int i = 0; i < n; i += stride, arrayANext+=stride){
+  for(int i = 0; i < n; i += stride, arrayANext += stride){
 
     arrayBNext = matrix_b->d_rows;
 
     int row = i / matrix_a->width;
     arrayCNext = matrix_c->d_rows + row * matrix_b->width;
 
-    for(int k = 0; k < matrix_a->width; k++, arrayBNext++, arrayCNext++){
+    for(int k = 0; k < matrix_b->width; k++, arrayBNext++, arrayCNext++){
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
   } 
