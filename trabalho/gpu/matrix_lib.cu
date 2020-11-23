@@ -165,7 +165,7 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 
 // Kernel function to mult to array
 __global__ 
-void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
+void matrix_mult(int n, int matrix_a_width, int matrix_b_width, float * matrix_a_rows, float * matrix_b_rows, float * matrix_c_rows)
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
@@ -174,19 +174,17 @@ void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
     printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
   }
 
-  float * arrayANext = matrix_a->d_rows;
-  float * arrayBNext = matrix_b->d_rows;
-  float * arrayCNext = matrix_c->d_rows;
+  float * arrayANext = matrix_a_rows;
+  float * arrayBNext = matrix_b_rows;
+  float * arrayCNext = matrix_c_rows;
 
   for(int i = 0; i < n; i += stride, arrayANext += stride){
-    printf("%d\n", matrix_a->width);
-
-    arrayBNext = matrix_b->d_rows;
+    arrayBNext = matrix_b_rows;
 
     int row = i / matrix_a->width;
-    arrayCNext = matrix_c->d_rows + row * matrix_b->width;
+    arrayCNext = matrix_c_rows + row * matrix_b_rows;
 
-    for(int k = 0; k < matrix_b->width; k++, arrayBNext++, arrayCNext++){
+    for(int k = 0; k < matrix_b_rows; k++, arrayBNext++, arrayCNext++){
       // printf("%f\n", (*arrayANext) * (*arrayBNext));
       *arrayCNext = (*arrayANext) * (*arrayBNext);
     }
@@ -207,8 +205,6 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
   }
 
   int matrix_size = matrix_a->height * matrix_a->width;
-
-  printf("%d",matrix_size);
 
   int loop_limit = (matrix_size + DEVICE_DATASET_SIZE - 1) / DEVICE_DATASET_SIZE;
   int chunk_size = DEVICE_DATASET_SIZE;
@@ -243,8 +239,8 @@ int matrix_matrix_mult(Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c){
     if (numBlocks > max_blocks_per_grid) {
       numBlocks = max_blocks_per_grid;
     }
-
-    matrix_mult<<<numBlocks, blockSize>>>(chunk_size, matrix_a, matrix_b, matrix_c);
+  
+    matrix_mult<<<numBlocks, blockSize>>>(chunk_size, matrix_a->width, matrix_b->width, matrix_a->d_rows, matrix_b->d_rows, matrix_c->d_rows);
 
     // Wait for GPU to finish before accessing on host
     cudaDeviceSynchronize();
