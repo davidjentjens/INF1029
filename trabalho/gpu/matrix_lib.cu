@@ -167,6 +167,8 @@ int scalar_matrix_mult(float scalar_value, Matrix * matrix){
 __global__ 
 void matrix_mult(int n, Matrix * matrix_a, Matrix * matrix_b, Matrix * matrix_c)
 {
+  printf("PPPPPPPPPPPPPPPP\n");
+
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
   
