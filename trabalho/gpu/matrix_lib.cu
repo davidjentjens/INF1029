@@ -12,7 +12,7 @@
 
 static int threads_per_block = 256;
 static int max_blocks_per_grid = 4096;
-
+cudaError_t cudaError;
 /** Determina o número de threads por bloco e o número máximo de blocos por grid */
 int set_grid_size(int threads_per_block_param, int max_blocks_per_grid_param){
   if(threads_per_block_param < THREADS_PER_BLOCK_LIMIT && max_blocks_per_grid_param < MAX_BLOCKS_PER_GRID_LIMIT){
