@@ -1,5 +1,5 @@
-#include "matrix_lib.cu"
 extern "C" {
+	#include "matrix_lib.h"
 	#include "timer.h"
 }
 
