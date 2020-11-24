@@ -102,10 +102,6 @@ void mult_scalar(int n, float *matrix_rows, float scalar_value)
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
-  
-  if(index == 0){
-    printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
-  }
 
   for (int i = index; i < n; i += stride) {
     matrix_rows[i] = matrix_rows[i] * scalar_value;
@@ -169,10 +165,6 @@ void matrix_mult(int n, int matrix_a_width,int matrix_a_height, int matrix_b_hei
 {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
-  
-  if(index == 0){
-    printf("\nblockDim.x=%d   gridDim.x%d   stride=%d\n", blockDim.x, gridDim.x, stride);
-  }
 
   for(int i = index; i < n; i+= stride){
 
@@ -266,7 +258,7 @@ int matrix_print(Matrix * matrix, const char * nome){
     }
     printf("\n");
   }
-  
+
   return 1;
 }
 
