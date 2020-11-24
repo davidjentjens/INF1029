@@ -119,12 +119,17 @@ int main(int argc, char **argv){
 	fclose(file1);
 	fclose(file2);
 	fclose(result1);
+
+	printf("CUDA 1");
 	fclose(result2);
+	printf("CUDA 2");
 
 	// Liberando memoria das matrizes
 	cudaFree(mA->d_rows);
 	cudaFree(mB->d_rows);
 	cudaFree(mC->d_rows);
+
+	printf("CUDA 3");
 	
 	gettimeofday(&overall_t2, NULL);
 
