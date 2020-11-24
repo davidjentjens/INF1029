@@ -1,1 +1,0 @@
-./matrix_lib_test 5.0 1024 1024 1024 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
