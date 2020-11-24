@@ -7,7 +7,7 @@
 
 #define DEVICE_DATASET_SIZE 1024000
 
-#define THREADS_PER_BLOCK_LIMIT 2048
+#define THREADS_PER_BLOCK_LIMIT 1024
 #define MAX_BLOCKS_PER_GRID_LIMIT 65535
 
 static int threads_per_block = 256;
